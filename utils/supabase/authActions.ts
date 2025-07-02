@@ -25,8 +25,15 @@ export async function login(formData: FormData) {
   // revalidate the root layout to update the session state
   // you can also revalidate a specific path if needed
   // revalidatePath('/some/specific/path')
+
   revalidatePath('/', 'layout') 
   redirect('/')
+  // const user = {
+  //   email: data?.email ?? null,
+  //   name: data?.name ?? null
+  // }
+
+  // return { user }
 }
 
 export async function signup(formData: FormData) {
@@ -36,6 +43,7 @@ export async function signup(formData: FormData) {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
     options:{
+      emailRedirectTo: process.env.NEXT_PUBLIC_SITE_URL,
       data:{
         name: formData.get('name') as string
       }
@@ -43,12 +51,13 @@ export async function signup(formData: FormData) {
   }
   const { error } = await supabase.auth.signUp(data)
 
-  if (error) {
-    redirect('/error')
+ if (error) {
+    // Instead of redirecting, throw error to handle in UI
+    return { error: error.message }
   }
 
-  revalidatePath('/', 'layout')
-  redirect('/')
+  // Return a message instead of redirecting immediately
+  return { message: 'Confirmation email sent. Please check your inbox.' }
 }
 
 export async function signInWithGoogle() {

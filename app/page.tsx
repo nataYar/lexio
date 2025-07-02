@@ -1,20 +1,8 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/utils/supabase/server'
-
-
+"use client"
+import { useUser } from '@/app/context/UserContext';
 
 export default function Home() {
-  
-  async function UserFound() {
-    const supabase = await createClient()
-
-    const { data, error } = await supabase.auth.getUser()
-    if (error || !data?.user) {
-      redirect('/login')
-    }
-
-    return <p>Hello {data.user.email}</p>
-  }
+  const { user, loading } = useUser();
 
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
@@ -22,9 +10,7 @@ export default function Home() {
         <h1 className="font-[family-name:var(--font-geist-mono)] text-4xl">Welcome to Lexio</h1>
         <p className="text-lg">Your go-to platform for all things related to language learning.</p>
       </main> */}
-      {
-        UserFound()
-      }
+      <p>Hi {user?.name || 'Guest'}</p>
       {/* <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
       </footer> */}
     </div>
