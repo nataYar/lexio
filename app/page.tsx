@@ -1,5 +1,6 @@
 "use client"
 import { useUser } from '@/app/context/UserContext';
+import InitialNewsLoad from './api/news';
 
 export default function Home() {
   const { user, loading } = useUser();
@@ -11,6 +12,7 @@ export default function Home() {
         <p className="text-lg">Your go-to platform for all things related to language learning.</p>
       </main> */}
       <p>Hi {user?.name || 'Guest'}</p>
+      <InitialNewsLoad />
       {/* <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
       </footer> */}
     </div>

@@ -3,14 +3,26 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client' // use client-side Supabase instance
 
+type NewsArticle = {
+  article_id: string;
+  title: string;
+  link: string;
+  
+};
+
 type User = {
   name: string | null
   email: string | null
+   credits: number;
+  creditStartDate: string | null; // ISO string
+  news: NewsArticle[];
 }
 
 type UserContextType = {
   user: User | null
   loading: boolean
+  useCredit: () => void;
+  addNews: (article: NewsArticle) => void;
 }
 
 const UserContext = createContext<UserContextType>({
