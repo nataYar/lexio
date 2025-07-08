@@ -1,77 +1,127 @@
-'use client'
+"use client";
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
-import { createClient } from '@/utils/supabase/client' // use client-side Supabase instance
+import React, { createContext, use, useContext, useEffect, useState } from "react";
+import { createClient } from "@/utils/supabase/client"; // use client-side Supabase instance
 
 type NewsArticle = {
   article_id: string;
   title: string;
   link: string;
-  
+  description?: string;
+  image_url?: string;
+  published_at?: string;
 };
 
 type User = {
-  name: string | null
-  email: string | null
-   credits: number;
-  creditStartDate: string | null; // ISO string
-  news: NewsArticle[];
-}
+  id: string;
+  name: string | null;
+  email: string | null;
+  ai_credits: number;
+  news_api_calls: number;
+  news_api_start: string | null;
+  last_news_call: string | null;
+
+  last_credit_use: string | null;
+  credit_start_date: string | null;
+  saved_articles: NewsArticle[];
+  viewed_articles: NewsArticle[];
+};
 
 type UserContextType = {
-  user: User | null
-  loading: boolean
-  useCredit: () => void;
-  addNews: (article: NewsArticle) => void;
-}
+  user: User | null;
+  loading: boolean;
+};
 
 const UserContext = createContext<UserContextType>({
   user: null,
   loading: true,
-})
+});
 
-export const useUser = () => useContext(UserContext)
+export const useUser = () => useContext(UserContext);
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+
 
   useEffect(() => {
     const supabase = createClient();
 
     const fetchUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data?.user) {
-        const name = data.user.user_metadata?.name ?? null;
-        const email = data.user.email;
-        setUser({ name, email });
+      setLoading(true);
+
+      const { data: auth } = await supabase.auth.getUser();
+      const sessionUser = auth?.user;
+
+      if (!sessionUser) {
+        setLoading(false);
+        return;
       }
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", sessionUser.id)
+        .single();
+
+      if (profileError || !profile) {
+        console.error("Profile fetch error:", profileError);
+        setLoading(false);
+        return;
+      }
+
+      const { data: savedArticles } = await supabase
+        .from("saved_articles")
+        .select("article_id, articles(*)")
+        .eq("user_id", sessionUser.id);
+
+      const { data: viewedArticles } = await supabase
+        .from("viewed_articles")
+        .select("article_id, articles(*)")
+        .eq("user_id", sessionUser.id);
+
+      setUser({
+        id: sessionUser.id,
+        name: sessionUser.user_metadata?.name ?? null,
+        email: sessionUser.email,
+        ai_credits: profile.ai_credits ?? 0,
+        news_api_calls: profile.news_api_calls ?? 0,
+        news_api_start: profile.news_api_start ?? null,
+        last_news_call: profile.last_news_call ?? null,
+        last_credit_use: profile.last_credit_use ?? null,
+        credit_start_date: profile.credit_start_date ?? null,
+        saved_articles: savedArticles?.map((sa) => sa.articles) ?? [],
+        viewed_articles: viewedArticles?.map((va) => va.articles) ?? [],
+      });
+
       setLoading(false);
     };
 
     fetchUser();
 
     // Listen for auth changes (login/logout/signup)
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        const name = session.user.user_metadata?.name;
-        const email = session.user.email;
-        setUser({ name, email });
-      } else {
-        setUser(null); // e.g. on logout
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (!session) {
+          setUser(null);
+        } else {
+          fetchUser(); // Refresh on login/signup
+        }
       }
-    });
+    );
 
     return () => {
       listener?.subscription.unsubscribe(); // ✅ clean up listener
     };
   }, []);
 
-  useEffect(() => {console.log( user)}, [user]);
+  useEffect(() => {
+    console.log(user);
+  }, [user]);
 
   return (
     <UserContext.Provider value={{ user, loading }}>
       {children}
     </UserContext.Provider>
-  )
-}
+  );
+};
