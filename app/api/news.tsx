@@ -1,14 +1,11 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import useNewsDataApiClient from "newsdataapi";
-import Dropdown from "react-bootstrap/Dropdown";
-import DropdownButton from "react-bootstrap/DropdownButton";
 import { countryOptions } from "./selectOptions";
 import { categoryOptions } from "./selectOptions";
-import { Form, Button, Row, Col, Alert, Card, Badge } from "react-bootstrap";
+import { Form, Button, Row, Col, Alert, Card, Badge, Image } from "react-bootstrap";
 import Select from "react-select";
 import { useUser } from "@/app/context/UserContext";
-// import { supabase } from "@/utils/supabase/client";
 import { format, isToday, parseISO } from "date-fns";
 import { createClient } from "@/utils/supabase/client";
 
@@ -17,7 +14,8 @@ const InitialNewsLoad = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([
     "top",
   ]);
-  const [keyword, setKeyword] = useState<string>("");
+  const [qInMeta, setQInMeta] = useState<string>("");
+  const [searchInTitleOnly, setSearchInTitleOnly] = useState<boolean>(false);
   const [results, setResults] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const { user } = useUser();
@@ -27,7 +25,7 @@ const InitialNewsLoad = () => {
   );
 
   useEffect(() => {
-    console.log('results');
+    console.log("results");
     console.log(results);
   }, [results]);
 
@@ -72,16 +70,22 @@ const InitialNewsLoad = () => {
         params.append("category", selectedCategories.join(","));
       }
 
-      if (keyword.trim()) {
-        params.append("q", keyword.trim());
+      if (qInMeta.trim()) {
+        if (searchInTitleOnly) {
+          params.append("qInTitle", qInMeta.trim());
+        } else {
+          params.append("qInMeta", qInMeta.trim());
+        }
       }
 
-      const url = `https://newsdata.io/api/1/latest?${params.toString()}&apikey=${process.env.NEXT_PUBLIC_NEWSDATA_API_KEY}`
-      console.log(url)
+      const url = `https://newsdata.io/api/1/latest?${params.toString()}&apikey=${
+        process.env.NEXT_PUBLIC_NEWSDATA_API_KEY
+      }`;
+      console.log(url);
       const response = await fetch(url);
 
       const data = await response.json();
-      console.log(data)
+      console.log(data);
 
       setResults((prev) => {
         const existingIds = new Set(prev.map((article) => article.article_id));
@@ -91,7 +95,7 @@ const InitialNewsLoad = () => {
         return [...newArticles, ...prev];
       });
 
-      const supabase = createClient(); 
+      const supabase = createClient();
       await supabase
         .from("profiles")
         .update({
@@ -106,8 +110,12 @@ const InitialNewsLoad = () => {
   };
 
   return (
-    <div className="p-4 w-full bg-blue-500">
-      <h4 className="mb-3">Search News</h4>
+    <div className="p-4 w-full">
+      <div className="flex">
+        <h4 className="my-3">Search News</h4>
+        <Image className="h-6 my-auto"src="/icons/purple-glitter.png" rounded />
+      </div>
+      
       {error && <Alert variant="danger">{error}</Alert>}
       <Form onSubmit={handleSubmit}>
         <Row>
@@ -133,7 +141,7 @@ const InitialNewsLoad = () => {
             </Form.Group>
           </Col>
           <Col md={6}>
-            <Form.Group controlId="categories">
+            <Form.Group className="my-3" controlId="categories">
               <Form.Label>
                 {" "}
                 Category
@@ -157,16 +165,26 @@ const InitialNewsLoad = () => {
             </Form.Group>
           </Col>
         </Row>
-        <Form.Group className="mt-3">
+        <Form.Group className="mb-3">
           <Form.Label>Keyword (optional)</Form.Label>
           <Form.Control
             type="text"
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
+            value={qInMeta}
+            onChange={(e) => setQInMeta(e.target.value)}
             placeholder="e.g. movies, AI, elections"
             maxLength={100}
           />
         </Form.Group>
+        <Form.Group className="my-3 text-muted">
+          <Form.Check
+            type="switch"
+            id="searchInTitleSwitch"
+            label="Search in title only (more specific, fewer results)"
+            checked={searchInTitleOnly}
+            onChange={(e) => setSearchInTitleOnly(e.target.checked)}
+          />
+        </Form.Group>
+
         <Button className="mt-3" variant="primary" type="submit">
           Search
         </Button>
@@ -174,13 +192,17 @@ const InitialNewsLoad = () => {
 
       <hr />
 
-      <h5>Result news within 48 hr</h5>
+
+
+      <h5>Latest news from the past 48 hours</h5>
+
       {results.length === 0 ? (
-        <p>No results yet.</p>
+        <p className="text-muted">No results yet.</p>
       ) : (
         <p>Showing top {results.length} articles.</p>
       )}
-      {results.map((article, i) => (
+      <div className="w-full flex">
+        {results.map((article, i) => (
         <Card key={i} className="mb-3 w-4/5">
           <Card.Body>
             <Card.Title>{article.title}</Card.Title>
@@ -188,24 +210,26 @@ const InitialNewsLoad = () => {
               <Card.Img
                 src={article.image_url}
                 alt="news"
-                style={{ maxHeight: 300 }}
+                className="h-1/3"
+                // style={{ maxHeight: 300 }}
               />
             )}
             <Card.Text>{article.description || article.snippet}</Card.Text>
+           
             {article.link && (
-              <a href={article.link} target="_blank" rel="noreferrer">
+              <a  href={article.link} target="_blank" rel="noreferrer">
                 Go to source
               </a>
             )}
-            <div className="d-flex flex-column flex-md-row justify-content-between align-items-start mt-3">
+            <div className="flex flex-col md:flex-row justify-between items-start">
               {/* Left side */}
               <div className="w-4/5">
                 {/* Display Category */}
                 {article.category && article.category.length > 0 && (
-                  <div className="mb-2">
+                  <div className="my-2">
                     <strong>Categories:</strong>{" "}
                     {article.category.map((cat: string) => (
-                      <Badge bg="secondary" className="me-1" key={cat}>
+                      <Badge bg="bg-gray-400" className="bg-gray-400 me-1"  key={cat}>
                         {cat}
                       </Badge>
                     ))}
@@ -214,31 +238,26 @@ const InitialNewsLoad = () => {
 
                 {/* Display Country */}
                 {article.country && (
-                  <div className="mb-2">
+                  <div className="my-2">
                     <strong>Country:</strong>{" "}
-                    <Badge bg="info" className="me-1">
                       {article.country.map((cat: string) => (
-                      <Badge bg="secondary" className="me-1" key={cat}>
-                        {cat}
-                      </Badge>
-                    ))}
-
-
-                      
-                    </Badge>
+                        <Badge bg="bg-gray-400" className="bg-gray-400 me-1" key={cat}>
+                          {cat}
+                        </Badge>
+                      ))}
                   </div>
                 )}
 
                 {/* Display Keywords */}
                 {article.keywords && article.keywords.length > 0 && (
-                  <div className="mb-2">
-                    <strong>Keywords:</strong> <span>{article.keywords}</span>
+                  <div className="my-2">
+                    <strong>Keywords:</strong> <span className="text-muted">{article.keywords}</span>
                   </div>
                 )}
               </div>
 
               {/* Start Reading button */}
-              <div className="w-4/5 d-flex justify-content-end">
+              <div className="self-end mt-3">
                 <Button variant="success" size="sm">
                   Start a class
                 </Button>
@@ -247,6 +266,7 @@ const InitialNewsLoad = () => {
           </Card.Body>
         </Card>
       ))}
+      </div>
     </div>
   );
 };
