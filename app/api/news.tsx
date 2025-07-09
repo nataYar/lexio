@@ -61,26 +61,37 @@ const InitialNewsLoad = () => {
     // }
 
     try {
-      const query = {
-        // country: selectedCountries.join(','),
-        // category: selectedCategories.join(','),
-        language: "en",
+      const params = new URLSearchParams();
+      params.append("language", "en");
 
-        // ...(keyword.trim().length > 0 && { q: keyword.trim() })
-      };
+      if (selectedCountries.length > 0) {
+        params.append("country", selectedCountries.join(","));
+      }
 
-      const data = await latest(query);
-      console.log(data.results);
+      if (selectedCategories.length > 0) {
+        params.append("category", selectedCategories.join(","));
+      }
+
+      if (keyword.trim()) {
+        params.append("q", keyword.trim());
+      }
+
+      const url = `https://newsdata.io/api/1/latest?${params.toString()}&apikey=${process.env.NEXT_PUBLIC_NEWSDATA_API_KEY}`
+      console.log(url)
+      const response = await fetch(url);
+
+      const data = await response.json();
+      console.log(data)
 
       setResults((prev) => {
         const existingIds = new Set(prev.map((article) => article.article_id));
         const newArticles = (data.results || []).filter(
           (article) => !existingIds.has(article.article_id)
         );
-        return [...prev, ...newArticles];
+        return [...newArticles, ...prev];
       });
 
-      const supabase = createClient(); // or wherever your client lives
+      const supabase = createClient(); 
       await supabase
         .from("profiles")
         .update({
@@ -95,7 +106,7 @@ const InitialNewsLoad = () => {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 w-full bg-blue-500">
       <h4 className="mb-3">Search News</h4>
       {error && <Alert variant="danger">{error}</Alert>}
       <Form onSubmit={handleSubmit}>
@@ -162,14 +173,15 @@ const InitialNewsLoad = () => {
       </Form>
 
       <hr />
-      <h5>Results</h5>
+
+      <h5>Result news within 48 hr</h5>
       {results.length === 0 ? (
         <p>No results yet.</p>
       ) : (
         <p>Showing top {results.length} articles.</p>
       )}
       {results.map((article, i) => (
-        <Card key={i} className="mb-3">
+        <Card key={i} className="mb-3 w-4/5">
           <Card.Body>
             <Card.Title>{article.title}</Card.Title>
             {article.image_url && (
@@ -187,7 +199,7 @@ const InitialNewsLoad = () => {
             )}
             <div className="d-flex flex-column flex-md-row justify-content-between align-items-start mt-3">
               {/* Left side */}
-              <div className="w-4/5 flex-grow-1">
+              <div className="w-4/5">
                 {/* Display Category */}
                 {article.category && article.category.length > 0 && (
                   <div className="mb-2">
@@ -205,7 +217,14 @@ const InitialNewsLoad = () => {
                   <div className="mb-2">
                     <strong>Country:</strong>{" "}
                     <Badge bg="info" className="me-1">
-                      {article.country.toUpperCase()}
+                      {article.country.map((cat: string) => (
+                      <Badge bg="secondary" className="me-1" key={cat}>
+                        {cat}
+                      </Badge>
+                    ))}
+
+
+                      
                     </Badge>
                   </div>
                 )}
@@ -219,7 +238,7 @@ const InitialNewsLoad = () => {
               </div>
 
               {/* Start Reading button */}
-              <div className="w-4/5 flex-grow-1 d-flex justify-content-end">
+              <div className="w-4/5 d-flex justify-content-end">
                 <Button variant="success" size="sm">
                   Start a class
                 </Button>
