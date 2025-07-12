@@ -3,14 +3,22 @@
 import React, { createContext, use, useContext, useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client"; // use client-side Supabase instance
 
+
 type NewsArticle = {
   article_id: string;
   title: string;
-  link: string;
   description?: string;
+  snippet?: string;
   image_url?: string;
-  published_at?: string;
+  link?: string;
+  category?: string[];
+  country?: string[];
+  keywords?: string[];
+  pubDate?: string;
+  pubDateTZ?: string;
 };
+
+
 
 type User = {
   id: string;
