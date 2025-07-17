@@ -1,8 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
 // import useNewsDataApiClient from "newsdataapi";
-import { countryOptions } from "./selectOptions";
-import { categoryOptions } from "./selectOptions";
+import { countryOptions, categoryOptions } from "./search-options";
+import SearchForm from "@/components/news/SearchForm";
+import ArticleCard from "@/components/news/ArticleCard";
 import {
   Form,
   Button,
@@ -59,7 +60,7 @@ const generateTabId = (params: SearchParams): string => {
   );
 };
 
-const InitialNewsLoad = () => {
+const NewsSearch = () => {
   const { user } = useUser();
   const [tabMap, setTabMap] = useState<Record<string, SearchTab>>({});
 
@@ -117,12 +118,36 @@ const InitialNewsLoad = () => {
     try {
       const response = await fetch(url);
       const data = await response.json();
+      
+      
 
       setTabMap((prev) => {
+        const nameParts = [];
+      if (params.keyword) {
+        nameParts.push(params.keyword);
+      }
+      if (params.countries.length > 0) {
+        nameParts.push(params.countries.join(', '));
+      }
+      if (params.categories.length > 0) {
+        nameParts.push(params.categories.join(', '));
+      }
+      let tabName = nameParts.join(' – ');
+      
+      if (!tabName) {
+        // Count how many tabs already use numeric names
+        const numberedNames = Object.values(prev)
+          .map((tab) => tab.name)
+          .filter((name) => /^\d+$/.test(name))
+          .map(Number);
+        const nextNumber = numberedNames.length > 0 ? Math.max(...numberedNames) + 1 : 1;
+        tabName = String(nextNumber);
+      }
+
         const tabId = generateTabId(params);
         const existing = prev[tabId] || {
           id: tabId,
-          name: tabId,
+          name: tabName,
           params,
           articles: [],
           nextPage: null,
@@ -180,7 +205,6 @@ const InitialNewsLoad = () => {
     }
   };
 
-  const activeTab = activeTabId ? tabMap[activeTabId] : null;
 
   return (
     <div className="p-4 w-full">
@@ -195,72 +219,17 @@ const InitialNewsLoad = () => {
 
       {error && <Alert variant="danger">{error}</Alert>}
       <Stack>
-        <Form onSubmit={handleSubmit}>
-          <Form.Group controlId="countries">
-            <Form.Label>
-              Countries
-              {selectedCountries.length > 0 && selectedCountries.length <= 5
-                ? ` (selected: ${selectedCountries.length} of 5)`
-                : " (max 5)"}
-            </Form.Label>
-            <Select
-              isMulti
-              options={countryOptions}
-              value={countryOptions.filter((o) =>
-                selectedCountries.includes(o.value)
-              )}
-              onChange={(selected) =>
-                setSelectedCountries(selected.map((o) => o.value).slice(0, 5))
-              }
-              placeholder="Select countries..."
-            />
-          </Form.Group>
-
-          <Form.Group className="my-3" controlId="categories">
-            <Form.Label>
-              {" "}
-              Category
-              {selectedCategories.length > 0 && selectedCategories.length <= 5
-                ? ` (selected: ${selectedCategories.length} of 5)`
-                : " (max 5)"}
-            </Form.Label>
-            <Select
-              isMulti
-              options={categoryOptions}
-              value={categoryOptions.filter((o) =>
-                selectedCategories.includes(o.value)
-              )}
-              onChange={(selected) =>
-                setSelectedCategories(selected.map((o) => o.value).slice(0, 5))
-              }
-              placeholder="Select categories..."
-            />
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Keyword (optional)</Form.Label>
-            <Form.Control
-              type="text"
-              value={qInMeta}
-              onChange={(e) => setQInMeta(e.target.value)}
-              placeholder="e.g. movies, AI, elections"
-              maxLength={100}
-            />
-          </Form.Group>
-          <Form.Group className="my-3 text-muted">
-            <Form.Check
-              type="switch"
-              id="searchInTitleSwitch"
-              label="Search in title only (more specific, fewer results)"
-              checked={searchInTitleOnly}
-              onChange={(e) => setSearchInTitleOnly(e.target.checked)}
-            />
-          </Form.Group>
-
-          <Button className="mt-3" variant="primary" type="submit">
-            Search
-          </Button>
-        </Form>
+        <SearchForm
+          selectedCountries={selectedCountries}
+          selectedCategories={selectedCategories}
+          keyword={qInMeta}
+          searchInTitleOnly={searchInTitleOnly}
+          setSelectedCountries={setSelectedCountries}
+          setSelectedCategories={setSelectedCategories}
+          setKeyword={setQInMeta}
+          setSearchInTitleOnly={setSearchInTitleOnly}
+          onSubmit={handleSubmit}
+        />
       </Stack>
       <hr />
 
@@ -278,9 +247,8 @@ const InitialNewsLoad = () => {
         ))}
       </div>
 
-
       {/* Active Tab Content */}
-      {activeTab && tabMap[activeTabId] && (
+      {activeTabId !== null && tabMap[activeTabId] && (
         <div>
           {tabMap[activeTabId].error && (
             <Alert variant="danger">{tabMap[activeTabId].error}</Alert>
@@ -294,89 +262,13 @@ const InitialNewsLoad = () => {
             <p>Showing top {tabMap[activeTabId].articles.length} articles.</p>
           )}
 
-          {tabMap[activeTabId].articles.map((article, i) => (
-            <Card key={i} className="mb-3 w-4/5">
-              <Card.Body>
-                <Card.Title>{article.title}</Card.Title>
-                {article.image_url && (
-                  <Card.Img
-                    src={article.image_url}
-                    alt="news"
-                    className="w-full h-auto"
-                  />
-                )}
-                <Card.Text>{article.description || article.snippet}</Card.Text>
-                {article.link && (
-                  <a href={article.link} target="_blank" rel="noreferrer">
-                    Go to source
-                  </a>
-                )}
-                <div className="flex flex-col md:flex-row justify-between items-start">
-                  <div className="w-4/5">
-                    {/* Display Category */}
-                    {article.category && article.category.length > 0 && (
-                      <div className="my-2">
-                        <strong>Categories:</strong>{" "}
-                        {article.category.map((cat: string) => (
-                          <Badge
-                            bg="bg-gray-400"
-                            className="bg-gray-400 me-1"
-                            key={cat}
-                          >
-                            {cat}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Display Country */}
-                    {article.country && (
-                      <div className="my-2">
-                        <strong>Country:</strong>{" "}
-                        {article.country.map((cat: string) => (
-                          <Badge
-                            bg="bg-gray-400"
-                            className="bg-gray-400 me-1"
-                            key={cat}
-                          >
-                            {cat}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Display Keywords */}
-                    {article.keywords && article.keywords.length > 0 && (
-                      <div className="my-2">
-                        <strong>Keywords:</strong>{" "}
-                        <span className="text-muted">{article.keywords}</span>
-                      </div>
-                    )}
-
-                    {/* Display Date */}
-                    {article.pubDate && (
-                      <div className="my-2">
-                        <strong>Date:</strong>{" "}
-                        <span className="text-muted">
-                          {format(parseISO(article.pubDate), "PPpp")}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Start Reading button */}
-                  <div className="self-end mt-3">
-                    <Button variant="success" size="sm">
-                      Start a class
-                    </Button>
-                  </div>
-                </div>
-              </Card.Body>
-            </Card>
+          {tabMap[activeTabId].articles.map((article) => (
+            <ArticleCard key={article.article_id} article={article} />
           ))}
+
           {tabMap[activeTabId].nextPage && (
             <Button
-              onClick={() => handleLoadMore(activeTabId)}
+              onClick={() => handleLoadMore}
               variant="outline-primary"
               className="mt-3"
             >
@@ -388,4 +280,4 @@ const InitialNewsLoad = () => {
     </div>
   );
 };
-export default InitialNewsLoad;
+export default NewsSearch;
