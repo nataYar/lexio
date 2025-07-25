@@ -1,4 +1,4 @@
-// components/news/ArticleCard.tsx
+import React, { useEffect, useState } from "react";
 import { Card, Badge, Button } from "react-bootstrap";
 import { format, parseISO } from "date-fns";
 
@@ -17,17 +17,45 @@ type Props = {
   };
 };
 
-export default function ArticleCard({ article }: Props) {
+export default function ArticleCard({ article, ind }: Props) {
+
+const [description, setDescription] = useState<string | null>(null);
+
+ useEffect(() => {
+    const raw = article.description || article.snippet || "";
+    const limit = 300;
+
+    if (raw.length <= limit) {
+      setDescription(raw);
+      return;
+    }
+
+    
+    let slice = raw.slice(0, limit);
+
+   
+    const lastSpace = slice.lastIndexOf(" ");
+    if (lastSpace > 0) {
+      slice = slice.slice(0, lastSpace);
+    }
+
+    
+    setDescription(slice + "…");
+  }, [article]);
+
   return (
-    <Card className="mb-3 w-4/5">
+    <Card className="mb-3 w-full">
       <Card.Body>
         <Card.Title>{article.title}</Card.Title>
-
+        <div>{ind + 1}</div>
         {article.image_url && (
           <Card.Img src={article.image_url} alt="news" className="mb-3" />
         )}
 
-        <Card.Text>{article.description || article.snippet}</Card.Text>
+        <Card.Text>
+            {description}
+            </Card.Text>
+
 
         {article.link && (
           <a href={article.link} target="_blank" rel="noreferrer">

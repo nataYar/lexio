@@ -1,19 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
-// import useNewsDataApiClient from "newsdataapi";
-import { countryOptions, categoryOptions } from "./search-options";
 import SearchForm from "@/components/news/SearchForm";
 import ArticleCard from "@/components/news/ArticleCard";
-import {
-  Form,
-  Button,
-  Stack,
-  Alert,
-  Card,
-  Badge,
-  Image,
-} from "react-bootstrap";
-import Select from "react-select";
+import Loading from "@/components/Loading";
+import { Button, Stack, Alert, Image } from "react-bootstrap";
 import { useUser } from "@/app/context/UserContext";
 import { format, isToday, parseISO } from "date-fns";
 import { createClient } from "@/utils/supabase/client";
@@ -63,7 +53,7 @@ const generateTabId = (params: SearchParams): string => {
 const NewsSearch = () => {
   const { user } = useUser();
   const [tabMap, setTabMap] = useState<Record<string, SearchTab>>({});
-
+  const [loading, setLoading] = useState<boolean>(false);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [selectedCountries, setSelectedCountries] = useState<string[]>(["us"]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([
@@ -83,18 +73,21 @@ const NewsSearch = () => {
     page: string | null = null
   ) => {
     if (!user) return;
+    setLoading(true);
+    // should check within 24 h, not just today
+    const now = new Date();
+   const lastCallDate = user.last_news_call ? parseISO(user.last_news_call) : null;
 
-    const today = new Date();
-    const lastCallDate = user.last_news_call
-      ? parseISO(user.last_news_call)
-      : null;
-    const isSameDay = lastCallDate && isToday(lastCallDate);
-    const dailyCallCount = isSameDay ? user.news_api_calls : 0;
 
-    if (dailyCallCount >= 10) {
-      alert("You've reached your daily news limit. Try again tomorrow.");
-      return;
-    }
+    //  "24 hours" in milliseconds:
+    const within24Hours = lastCallDate && now.getTime() - lastCallDate.getTime() < 24 * 60 * 60 * 1000;
+
+    const dailyCallCount = within24Hours ? user.news_api_calls : 0;
+
+    // if (dailyCallCount >= 10) {
+    //   alert("You've reached your daily news limit. Try again tomorrow.");
+    //   return;
+    // }
 
     const urlParams = new URLSearchParams();
     urlParams.append("language", "en");
@@ -111,38 +104,38 @@ const NewsSearch = () => {
     }
     if (page) urlParams.append("page", page);
 
-    const url = `https://newsdata.io/api/1/latest?${urlParams.toString()}&apikey=${
+    const url = `https://newsdata.io/api/1/latest?apikey=${
       process.env.NEXT_PUBLIC_NEWSDATA_API_KEY
-    }`;
+    }&${urlParams.toString()}`;
 
+    console.log(url);
     try {
       const response = await fetch(url);
       const data = await response.json();
-      
-      
 
       setTabMap((prev) => {
         const nameParts = [];
-      if (params.keyword) {
-        nameParts.push(params.keyword);
-      }
-      if (params.countries.length > 0) {
-        nameParts.push(params.countries.join(', '));
-      }
-      if (params.categories.length > 0) {
-        nameParts.push(params.categories.join(', '));
-      }
-      let tabName = nameParts.join(' – ');
-      
-      if (!tabName) {
-        // Count how many tabs already use numeric names
-        const numberedNames = Object.values(prev)
-          .map((tab) => tab.name)
-          .filter((name) => /^\d+$/.test(name))
-          .map(Number);
-        const nextNumber = numberedNames.length > 0 ? Math.max(...numberedNames) + 1 : 1;
-        tabName = String(nextNumber);
-      }
+        if (params.keyword) {
+          nameParts.push(params.keyword);
+        }
+        if (params.countries.length > 0) {
+          nameParts.push(params.countries.join(", "));
+        }
+        if (params.categories.length > 0) {
+          nameParts.push(params.categories.join(", "));
+        }
+        let tabName = nameParts.join(" - ");
+
+        if (!tabName) {
+          // Count how many tabs already use numeric names
+          const numberedNames = Object.values(prev)
+            .map((tab) => tab.name)
+            .filter((name) => /^\d+$/.test(name))
+            .map(Number);
+          const nextNumber =
+            numberedNames.length > 0 ? Math.max(...numberedNames) + 1 : 1;
+          tabName = String(nextNumber);
+        }
 
         const tabId = generateTabId(params);
         const existing = prev[tabId] || {
@@ -177,10 +170,12 @@ const NewsSearch = () => {
         .from("profiles")
         .update({
           news_api_calls: dailyCallCount + 1,
-          last_news_call: format(today, "yyyy-MM-dd"),
+          last_news_call: today.toISOString(),
         })
         .eq("id", user.id);
+      setLoading(false);
     } catch (err) {
+      setLoading(false);
       console.error("Fetch failed:", err);
     }
   };
@@ -199,26 +194,29 @@ const NewsSearch = () => {
   };
 
   const handleLoadMore = () => {
+    console.log(activeTabId);
     const activeTab = activeTabId ? tabMap[activeTabId] : null;
     if (activeTab && activeTab.nextPage) {
       fetchNews(activeTab.params, activeTab.nextPage);
     }
   };
 
-
   return (
     <div className="p-4 w-full">
+      
       <div className="flex">
-        <h4 className="my-3">Search News</h4>
+        <h4 className="mt-3">Search news</h4>
+        
         <Image
           className="h-6 my-auto"
           src="/icons/purple-glitter.png"
           rounded
         />
       </div>
+      <p className="text-muted ">from the past 48 hours</p>
 
       {error && <Alert variant="danger">{error}</Alert>}
-      <Stack>
+      <Stack className="mt-8">
         <SearchForm
           selectedCountries={selectedCountries}
           selectedCategories={selectedCategories}
@@ -232,6 +230,9 @@ const NewsSearch = () => {
         />
       </Stack>
       <hr />
+
+      {/* Loading  */}
+      {loading && <Loading />}
 
       {/* Tabs */}
       <div className="flex gap-2 mb-3 flex-wrap">
@@ -249,12 +250,10 @@ const NewsSearch = () => {
 
       {/* Active Tab Content */}
       {activeTabId !== null && tabMap[activeTabId] && (
-        <div>
+        <div className="flex flex-col gap-2 mb-3 flex-wrap ">
           {tabMap[activeTabId].error && (
             <Alert variant="danger">{tabMap[activeTabId].error}</Alert>
           )}
-
-          <h6 className="mb-2">Latest news from the past 48 hours</h6>
 
           {tabMap[activeTabId].articles.length === 0 ? (
             <p className="text-muted">No results yet.</p>
@@ -262,13 +261,32 @@ const NewsSearch = () => {
             <p>Showing top {tabMap[activeTabId].articles.length} articles.</p>
           )}
 
-          {tabMap[activeTabId].articles.map((article) => (
-            <ArticleCard key={article.article_id} article={article} />
-          ))}
+          {/* Load More button  */}
+           {tabMap[activeTabId].nextPage && (
+            <Button
+              onClick={handleLoadMore}
+              variant="outline-primary"
+              className="mt-3"
+            >
+              Load More
+            </Button>
+          )}
 
+          {/* Articles */}
+          <div className="flex flex-row gap-2 mb-3 flex-wrap justify-between">
+            {tabMap[activeTabId].articles.map((article, ind) => (
+              <ArticleCard
+                ind={ind}
+                key={article.article_id}
+                article={article}
+              />
+            ))}
+          </div>
+
+          {/* Load More button */}
           {tabMap[activeTabId].nextPage && (
             <Button
-              onClick={() => handleLoadMore}
+              onClick={handleLoadMore}
               variant="outline-primary"
               className="mt-3"
             >

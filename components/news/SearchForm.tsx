@@ -28,6 +28,7 @@ export default function SearchForm({
 }: Props) {
   return (
     <Form
+    
       onSubmit={(e) => {
         e.preventDefault();   // optional here if parent handles it
         onSubmit(e);
