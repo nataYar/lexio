@@ -28,7 +28,7 @@ export default function SearchForm({
 }: Props) {
   return (
     <Form
-    
+    className="mx-auto w-full md:w-2/3"
       onSubmit={(e) => {
         e.preventDefault();   // optional here if parent handles it
         onSubmit(e);

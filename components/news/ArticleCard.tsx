@@ -17,11 +17,19 @@ type Props = {
   };
 };
 
-export default function ArticleCard({ article, ind }: Props) {
+export default function ArticleCard({
+  article,
+  ind,
+  widthIndex,
+  availableWidths,
+}: Props) {
+  const [description, setDescription] = useState<string | null>(null);
 
-const [description, setDescription] = useState<string | null>(null);
+  useEffect(() => {
+    console.log(availableWidths);
+  }, [availableWidths]);
 
- useEffect(() => {
+  useEffect(() => {
     const raw = article.description || article.snippet || "";
     const limit = 300;
 
@@ -30,21 +38,18 @@ const [description, setDescription] = useState<string | null>(null);
       return;
     }
 
-    
     let slice = raw.slice(0, limit);
 
-   
     const lastSpace = slice.lastIndexOf(" ");
     if (lastSpace > 0) {
       slice = slice.slice(0, lastSpace);
     }
 
-    
     setDescription(slice + "…");
   }, [article]);
 
   return (
-    <Card className="mb-3 w-full">
+    <Card className={`p-2.5 mb-5 ${availableWidths[widthIndex]}`}>
       <Card.Body>
         <Card.Title>{article.title}</Card.Title>
         <div>{ind + 1}</div>
@@ -52,10 +57,7 @@ const [description, setDescription] = useState<string | null>(null);
           <Card.Img src={article.image_url} alt="news" className="mb-3" />
         )}
 
-        <Card.Text>
-            {description}
-            </Card.Text>
-
+        <Card.Text>{description}</Card.Text>
 
         {article.link && (
           <a href={article.link} target="_blank" rel="noreferrer">

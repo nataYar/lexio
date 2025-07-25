@@ -7,6 +7,8 @@ import { Button, Stack, Alert, Image } from "react-bootstrap";
 import { useUser } from "@/app/context/UserContext";
 import { format, isToday, parseISO } from "date-fns";
 import { createClient } from "@/utils/supabase/client";
+import FloatingActions from "@/components/news/FloatingActions";
+import NewsLayout from "@/components/news/NewsLayout";
 
 type Article = {
   article_id: string;
@@ -63,6 +65,34 @@ const NewsSearch = () => {
   const [searchInTitleOnly, setSearchInTitleOnly] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [widthIndex, setWidthIndex] = useState<number>(0);
+  const [availableWidths, setAvailableWidths] = useState<string[]>(["w-full"]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const screenWidth = window.innerWidth;
+
+      if (screenWidth < 640) {
+        // Mobile (Tailwind sm)
+        setAvailableWidths(["w-full"]);
+        setWidthIndex(0);
+      } else if (screenWidth < 1024) {
+        // Tablet (Tailwind md to lg)
+        setAvailableWidths(["w-full", "w-[50%]"]);
+        setWidthIndex(1); // default to w-1/2
+      } else {
+        // Desktop (Tailwind lg and up)
+        setAvailableWidths(["w-full", "w-[50%]", "w-[30%]"]);
+        setWidthIndex(1); // default to w-1/2
+      }
+    };
+
+    handleResize(); // Run once on mount
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   useEffect(() => {
     console.log("tabMap");
     console.log(tabMap);
@@ -76,11 +106,14 @@ const NewsSearch = () => {
     setLoading(true);
     // should check within 24 h, not just today
     const now = new Date();
-   const lastCallDate = user.last_news_call ? parseISO(user.last_news_call) : null;
-
+    const lastCallDate = user.last_news_call
+      ? parseISO(user.last_news_call)
+      : null;
 
     //  "24 hours" in milliseconds:
-    const within24Hours = lastCallDate && now.getTime() - lastCallDate.getTime() < 24 * 60 * 60 * 1000;
+    const within24Hours =
+      lastCallDate &&
+      now.getTime() - lastCallDate.getTime() < 24 * 60 * 60 * 1000;
 
     const dailyCallCount = within24Hours ? user.news_api_calls : 0;
 
@@ -108,7 +141,6 @@ const NewsSearch = () => {
       process.env.NEXT_PUBLIC_NEWSDATA_API_KEY
     }&${urlParams.toString()}`;
 
-    console.log(url);
     try {
       const response = await fetch(url);
       const data = await response.json();
@@ -202,18 +234,20 @@ const NewsSearch = () => {
   };
 
   return (
-    <div className="p-4 w-full">
-      
-      <div className="flex">
-        <h4 className="mt-3">Search news</h4>
-        
-        <Image
-          className="h-6 my-auto"
-          src="/icons/purple-glitter.png"
-          rounded
-        />
+    <div className="flex flex-col items-center w-full">
+      <div>
+        <div className="flex">
+          <h4 className="mt-3">Search news</h4>
+
+          <Image
+            className="h-6 my-auto"
+            src="/icons/purple-glitter.png"
+            rounded
+          />
+        </div>
+
+        <p className="text-muted ">from the past 48 hours</p>
       </div>
-      <p className="text-muted ">from the past 48 hours</p>
 
       {error && <Alert variant="danger">{error}</Alert>}
       <Stack className="mt-8">
@@ -231,11 +265,18 @@ const NewsSearch = () => {
       </Stack>
       <hr />
 
+      {/* Layout */}
+      <NewsLayout
+        widthIndex={widthIndex}
+        setWidthIndex={setWidthIndex}
+        availableWidths={availableWidths}
+      />
+
       {/* Loading  */}
       {loading && <Loading />}
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-3 flex-wrap">
+      <div className="flex gap-2 my-3 flex-wrap w-full">
         {Object.entries(tabMap).map(([id, tab]) => (
           <Button
             key={id}
@@ -250,35 +291,44 @@ const NewsSearch = () => {
 
       {/* Active Tab Content */}
       {activeTabId !== null && tabMap[activeTabId] && (
-        <div className="flex flex-col gap-2 mb-3 flex-wrap ">
+        <div className="flex flex-col mb-3 flex-wrap ">
           {tabMap[activeTabId].error && (
             <Alert variant="danger">{tabMap[activeTabId].error}</Alert>
           )}
 
-          {tabMap[activeTabId].articles.length === 0 ? (
+<FloatingActions
+          // toggleCardWidth={() => setIsWide(prev => !prev)}
+          />
+
+          <div className="flex flex-row gap-x-4 items-baseline">
+            {tabMap[activeTabId].articles.length === 0 ? (
             <p className="text-muted">No results yet.</p>
           ) : (
             <p>Showing top {tabMap[activeTabId].articles.length} articles.</p>
           )}
 
           {/* Load More button  */}
-           {tabMap[activeTabId].nextPage && (
+          {tabMap[activeTabId].nextPage && (
             <Button
               onClick={handleLoadMore}
               variant="outline-primary"
-              className="mt-3"
+              className="mb-4 w-fit"
             >
               Load More
             </Button>
           )}
+          </div>
+          
 
           {/* Articles */}
-          <div className="flex flex-row gap-2 mb-3 flex-wrap justify-between">
+          <div className="flex flex-row flex-wrap justify-around">
             {tabMap[activeTabId].articles.map((article, ind) => (
               <ArticleCard
                 ind={ind}
                 key={article.article_id}
                 article={article}
+                availableWidths={availableWidths}
+                widthIndex={widthIndex}
               />
             ))}
           </div>
