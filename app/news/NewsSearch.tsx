@@ -78,11 +78,11 @@ const NewsSearch = () => {
         setWidthIndex(0);
       } else if (screenWidth < 1024) {
         // Tablet (Tailwind md to lg)
-        setAvailableWidths(["w-full", "w-[50%]"]);
+        setAvailableWidths(["w-full", "w-[45%]"]);
         setWidthIndex(1); // default to w-1/2
       } else {
         // Desktop (Tailwind lg and up)
-        setAvailableWidths(["w-full", "w-[50%]", "w-[30%]"]);
+        setAvailableWidths(["w-full", "w-[45%]", "w-[30%]"]);
         setWidthIndex(1); // default to w-1/2
       }
     };
@@ -296,32 +296,31 @@ const NewsSearch = () => {
             <Alert variant="danger">{tabMap[activeTabId].error}</Alert>
           )}
 
-<FloatingActions
+          <FloatingActions
           // toggleCardWidth={() => setIsWide(prev => !prev)}
           />
 
-          <div className="flex flex-row gap-x-4 items-baseline">
+          <div className="flex flex-row items-baseline gap-6">
             {tabMap[activeTabId].articles.length === 0 ? (
-            <p className="text-muted">No results yet.</p>
-          ) : (
-            <p>Showing top {tabMap[activeTabId].articles.length} articles.</p>
-          )}
+              <p className="text-muted">No results yet.</p>
+            ) : (
+              <p>Showing top {tabMap[activeTabId].articles.length} articles.</p>
+            )}
 
-          {/* Load More button  */}
-          {tabMap[activeTabId].nextPage && (
-            <Button
-              onClick={handleLoadMore}
-              variant="outline-primary"
-              className="mb-4 w-fit"
-            >
-              Load More
-            </Button>
-          )}
+            {/* Load More button  */}
+            {tabMap[activeTabId].nextPage && (
+              <Button
+                onClick={handleLoadMore}
+                variant="outline-primary"
+                className="mb-4 w-fit"
+              >
+                Load More
+              </Button>
+            )}
           </div>
-          
 
           {/* Articles */}
-          <div className="flex flex-row flex-wrap justify-around">
+          <div className="flex flex-row flex-wrap gap-1 justify-evenly ">
             {tabMap[activeTabId].articles.map((article, ind) => (
               <ArticleCard
                 ind={ind}
