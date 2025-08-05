@@ -4,6 +4,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { UserProvider } from "@/app/context/UserContext"; 
+import { WordProvider } from "@/app/context/WordContext"; 
+import GlobalListener  from "@/components/GlobalListener"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,8 +33,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <UserProvider>
-          <NavComponent />
-          {children}
+           <WordProvider>
+              <GlobalListener />
+              <NavComponent />
+              {children}
+            </WordProvider>
         </UserProvider>
       </body>
     </html>

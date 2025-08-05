@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { Card, Badge, Button } from "react-bootstrap";
 import { format, parseISO } from "date-fns";
+import fetchDefinition from "@/utils/merriam_webster/dictionary/fetchDefinition"
 
 type Props = {
   article: {
@@ -25,9 +27,9 @@ export default function ArticleCard({
 }: Props) {
   const [description, setDescription] = useState<string | null>(null);
 
-  useEffect(() => {
-    console.log(availableWidths);
-  }, [availableWidths]);
+  // useEffect(() => {
+  //   console.log(availableWidths);
+  // }, [availableWidths]);
 
   useEffect(() => {
     const raw = article.description || article.snippet || "";
@@ -47,6 +49,25 @@ export default function ArticleCard({
 
     setDescription(slice + "…");
   }, [article]);
+
+  // useEffect(() => {
+  //   const handleDoubleClick = (e: MouseEvent | TouchEvent) => {
+  //     const selection = window.getSelection()?.toString().trim();
+  //     if (selection) {
+  //       console.log(selection)
+  //       fetchDefinition(selection.toLowerCase());
+  //     }
+  //   };
+
+  //   document.addEventListener("dblclick", handleDoubleClick); // desktop
+  //   document.addEventListener("touchend", handleDoubleClick); // mobile
+
+  //   return () => {
+  //     document.removeEventListener("dblclick", handleDoubleClick);
+  //     document.removeEventListener("touchend", handleDoubleClick);
+  //   };
+  // }, []);
+
 
   return (
     <Card className={`p-2.5 mb-5 ${availableWidths[widthIndex]}`}>
@@ -84,9 +105,15 @@ export default function ArticleCard({
           </p>
         )}
 
-        <Button variant="success" size="sm">
-          Start a class
-        </Button>
+        <Link
+          key={article.article_id}
+          href={`/news/${article.article_id}`}
+          className="no-underline text-inherit"
+        >
+          <Button variant="success" size="sm">
+            Start a class
+          </Button>
+        </Link>
       </Card.Body>
     </Card>
   );
