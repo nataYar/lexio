@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useWord } from "@/app/context/WordContext";
 
 const GlobalListener = () => {
-  const { setSelectedWord } = useWord(); // or useUser()
+  const { setSelectedWord } = useWord();
 
   useEffect(() => {
     const handleDoubleClick = () => {

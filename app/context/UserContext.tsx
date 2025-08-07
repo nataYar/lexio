@@ -1,23 +1,8 @@
 "use client";
 
 import React, { createContext, use, useContext, useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client"; // use client-side Supabase instance
-
-
-type NewsArticle = {
-  article_id: string;
-  title: string;
-  description?: string;
-  snippet?: string;
-  image_url?: string;
-  link?: string;
-  category?: string[];
-  country?: string[];
-  keywords?: string[];
-  pubDate?: string;
-  pubDateTZ?: string;
-};
-
+import { createClient } from "@/utils/supabase/client";
+import { NewsArticle } from "@/types/news";
 
 
 type User = {
@@ -33,6 +18,7 @@ type User = {
   credit_start_date: string | null;
   saved_articles: NewsArticle[];
   viewed_articles: NewsArticle[];
+  searched_articles: NewsArticle[];
 };
 
 type UserContextType = {
@@ -69,7 +55,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         .from("profiles")
         .select("*")
         .eq("id", sessionUser.id)
-        .single();
+        .single(); //returns one object, not an array
 
       if (profileError || !profile) {
         console.error("Profile fetch error:", profileError);
@@ -87,6 +73,11 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         .select("article_id, articles(*)")
         .eq("user_id", sessionUser.id);
 
+      const { data: searchedArticles } = await supabase
+        .from("searched_articles")
+        .select("article_id, articles(*)")
+        .eq("user_id", sessionUser.id);
+
       setUser({
         id: sessionUser.id,
         name: sessionUser.user_metadata?.name ?? null,
@@ -99,6 +90,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         credit_start_date: profile.credit_start_date ?? null,
         saved_articles: savedArticles?.map((sa) => sa.articles) ?? [],
         viewed_articles: viewedArticles?.map((va) => va.articles) ?? [],
+        searched_articles: searchedArticles?.map((va) => va.articles) ?? [],
       });
 
       setLoading(false);

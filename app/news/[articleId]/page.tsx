@@ -7,7 +7,7 @@ type Props = {
 };
 
 export default async function ArticlePage({ params }: Props) {
-  const { articleId } = params;
+  const  articleId  = (await params).articleId;
 
   // Replace with your actual data source
   // const res = await fetch(`https://your-api.com/article/${articleId}`, {

@@ -2,21 +2,13 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, Badge, Button } from "react-bootstrap";
 import { format, parseISO } from "date-fns";
-import fetchDefinition from "@/utils/merriam_webster/dictionary/fetchDefinition"
+import { NewsArticle } from "@/types/news";
 
 type Props = {
-  article: {
-    article_id: string;
-    title: string;
-    description?: string;
-    snippet?: string;
-    image_url?: string;
-    link?: string;
-    category?: string[];
-    country?: string[];
-    keywords?: string[];
-    pubDate?: string;
-  };
+  article: NewsArticle;
+  ind: number;
+  widthIndex: number;
+  availableWidths: string[];
 };
 
 export default function ArticleCard({
@@ -26,10 +18,6 @@ export default function ArticleCard({
   availableWidths,
 }: Props) {
   const [description, setDescription] = useState<string | null>(null);
-
-  // useEffect(() => {
-  //   console.log(availableWidths);
-  // }, [availableWidths]);
 
   useEffect(() => {
     const raw = article.description || article.snippet || "";

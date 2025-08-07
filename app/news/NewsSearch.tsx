@@ -5,24 +5,11 @@ import ArticleCard from "@/components/news/ArticleCard";
 import Loading from "@/components/Loading";
 import { Button, Stack, Alert, Image } from "react-bootstrap";
 import { useUser } from "@/app/context/UserContext";
-import { format, isToday, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
 import { createClient } from "@/utils/supabase/client";
 import FloatingActions from "@/components/news/FloatingActions";
 import NewsLayout from "@/components/news/NewsLayout";
-
-type Article = {
-  article_id: string;
-  title: string;
-  description?: string;
-  snippet?: string;
-  image_url?: string;
-  link?: string;
-  category?: string[];
-  country?: string[];
-  keywords?: string[];
-  pubDate?: string;
-  pubDateTZ?: string;
-};
+import { NewsArticle } from "@/types/news";
 
 type SearchParams = {
   countries: string[];
@@ -35,7 +22,7 @@ type SearchTab = {
   id: string;
   name: string;
   params: SearchParams;
-  articles: Article[];
+  articles: NewsArticle[];
   nextPage: string | null;
   loading: boolean;
   error: string | null;
@@ -197,12 +184,13 @@ const NewsSearch = () => {
         };
       });
 
+
       const supabase = createClient();
       await supabase
         .from("profiles")
         .update({
           news_api_calls: dailyCallCount + 1,
-          last_news_call: today.toISOString(),
+          last_news_call: now.toISOString(),
         })
         .eq("id", user.id);
       setLoading(false);
@@ -233,6 +221,46 @@ const NewsSearch = () => {
     }
   };
 
+  useEffect(() => {
+        if (Object.keys(tabMap).length === 0) return;
+
+        const payload = {
+          savedAt: new Date().toISOString(), // Save current time
+          tabMap,
+        };
+
+        localStorage.setItem("news_tab_map", JSON.stringify(payload));
+      }, [tabMap]);
+
+      useEffect(() => {
+        const raw = localStorage.getItem("news_tab_map");
+
+        if (!raw) return;
+
+        try {
+          const parsed = JSON.parse(raw) as {
+            savedAt: string;
+            tabMap: Record<string, SearchTab>;
+          };
+
+          const savedTime = new Date(parsed.savedAt);
+          const now = new Date();
+
+          const msIn24Hours = 24 * 60 * 60 * 1000;
+          const isFresh = now.getTime() - savedTime.getTime() < msIn24Hours;
+
+          if (isFresh) {
+            setTabMap(parsed.tabMap);
+          } 
+          else {
+            localStorage.removeItem("news_tab_map");
+          }
+        } catch (e) {
+          console.error("Failed to load tabMap from localStorage:", e);
+          localStorage.removeItem("news_tab_map");
+        }
+      }, []);
+      
   return (
     <div className="flex flex-col items-center w-full">
       <div>
@@ -277,6 +305,15 @@ const NewsSearch = () => {
 
       {/* Tabs */}
       <div className="flex gap-2 my-3 flex-wrap w-full">
+        <Button
+          onClick={() => {
+            setTabMap({});
+            localStorage.removeItem("news_tab_map");
+          }}
+        >
+          Clear All Tabs
+        </Button>
+
         {Object.entries(tabMap).map(([id, tab]) => (
           <Button
             key={id}
@@ -302,9 +339,9 @@ const NewsSearch = () => {
 
           <div className="flex flex-row items-baseline gap-6">
             {tabMap[activeTabId].articles.length === 0 ? (
-              <p className="text-muted">No results yet.</p>
+              <p className="text-muted mt-5">No results yet.</p>
             ) : (
-              <p>Showing top {tabMap[activeTabId].articles.length} articles.</p>
+              <p className="text-muted mt-5">Showing top {tabMap[activeTabId].articles.length} articles.</p>
             )}
 
             {/* Load More button  */}
