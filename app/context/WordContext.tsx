@@ -7,13 +7,14 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import fetchDefinition from "@/utils/merriam_webster/dictionary/fetchDefinition"; 
+import fetchDefinition from "@/utils/merriam_webster/dictionary/fetchDefinition";
 
 type DictionaryData = {
   word: string;
   basicForm?: string;
   transcription?: string;
-  definition?: string;
+  definition: string[];
+  audioUrl?: string
 };
 
 type WordContextType = {
@@ -30,22 +31,39 @@ const WordContext = createContext<WordContextType>({
   setDictionaryData: () => {},
 });
 
-
 export const useWord = () => useContext(WordContext);
 
 export const WordProvider = ({ children }: { children: ReactNode }) => {
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
-const [dictionaryData, setDictionaryData] = useState<DictionaryData | null>(null);
+  const [dictionaryData, setDictionaryData] = useState<DictionaryData | null>(
+    null
+  );
 
- useEffect(() => {
-  if (!selectedWord) return;
+  useEffect(() => {
+    if (!selectedWord) return;
 
-  console.log(`Selected word changed to: ${selectedWord}`);
-  fetchDefinition(selectedWord);
-}, [selectedWord]);
+    console.log(`Selected word changed to: ${selectedWord}`);
+
+    fetchDefinition(selectedWord).then((result) => {
+      if (result) {
+        setDictionaryData(result);
+      }
+    });
+  }, [selectedWord]);
+
+  useEffect(() => {
+      console.log(dictionaryData);
+    }, [dictionaryData]);
 
   return (
-    <WordContext.Provider value={{  selectedWord, dictionaryData, setSelectedWord, setDictionaryData }}>
+    <WordContext.Provider
+      value={{
+        selectedWord,
+        dictionaryData,
+        setSelectedWord,
+        setDictionaryData,
+      }}
+    >
       {children}
     </WordContext.Provider>
   );

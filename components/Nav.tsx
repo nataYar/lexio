@@ -9,7 +9,7 @@ import { logout } from '@/app/logout/actions';
 
 function NavComponent() {
   return (
-    <Navbar expand="lg" className="absolute! w-full bg-body-tertiary">
+    <Navbar expand="lg" className="!absolute block lg:!hidden z-50 lg:h-11 w-full bg-body-tertiary">
       <Container>
         <Navbar.Brand href="/">Lexio</Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />

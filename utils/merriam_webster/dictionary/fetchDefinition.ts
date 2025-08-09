@@ -14,18 +14,36 @@ export default async function fetchDefinition(word: string) {
 
     // const definition = data[0].shortdef?.[0] || "Definition not found.";
     // console.log(`Definition of "${word}": ${definition}`);
+    const basicForm = data[0].hwi?.hw || word;
+    const transcription = data[0].hwi?.prs?.[0]?.mw;
+    const definition = Array.isArray(data[0].shortdef)
+      ? data[0].shortdef
+      : ["Definition not found."];
 
-    const definition = data[0].shortdef || "Definition not found.";
-    console.log(definition);
+    
 
     // Optional: log audio pronunciation URL
     const sound = data[0].hwi?.prs?.[0]?.sound?.audio;
+    console.log(definition);
+    console.log(basicForm )
+    console.log(transcription)
     console.log(sound)
+
+    let audioUrl: string | null = null; 
     if (sound) {
       const subdirectory = sound[0].match(/[0-9]/) ? 'number' : sound[0];
-      const audioUrl = `https://media.merriam-webster.com/audio/prons/en/us/mp3/${subdirectory}/${sound}.mp3`;
+      audioUrl = `https://media.merriam-webster.com/audio/prons/en/us/mp3/${subdirectory}/${sound}.mp3`;
       console.log(`Audio: ${audioUrl}`);
     }
+
+    return {
+      word,
+      basicForm,
+      transcription,
+      definition,
+      audioUrl,
+    };
+
   } catch (err) {
     console.error("Error fetching definition:", err);
   }

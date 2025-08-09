@@ -61,9 +61,9 @@ export default function ArticleCard({
     <Card className={`p-2.5 mb-5 ${availableWidths[widthIndex]}`}>
       <Card.Body>
         <Card.Title>{article.title}</Card.Title>
-        <div>{ind + 1}</div>
+        {/* <div>{ind + 1}</div> */}
         {article.image_url && (
-          <Card.Img src={article.image_url} alt="news" className="mb-3" />
+          <Card.Img src={article.image_url} alt="news" className="mb-3 h-1/3 lg:h-40 w-auto" />
         )}
 
         <Card.Text>{description}</Card.Text>
