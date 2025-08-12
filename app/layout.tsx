@@ -36,7 +36,7 @@ export default function RootLayout({
               <GlobalListener />
               <NavComponent />
               <SidePanel />
-              <div className="md:hidden">
+              <div className="fixed bottom-0 bg-white lg:hidden w-full z-100">
                 <WordPopup />
               </div>
               <div className="pl-0 lg:pl-[250px]">{children}</div>

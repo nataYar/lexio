@@ -2,7 +2,7 @@
 
 import React, { createContext, use, useContext, useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { NewsArticle } from "@/types/news";
+import { NewsArticle, SearchTab } from "@/types/news";
 
 
 type User = {
@@ -23,18 +23,25 @@ type User = {
 
 type UserContextType = {
   user: User | null;
+  tabMap: Record<string, SearchTab>;
+  setTabMap: React.Dispatch<React.SetStateAction<Record<string, SearchTab>>>; //function that receives the current state and returns the new state
   loading: boolean;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const UserContext = createContext<UserContextType>({
   user: null,
+  tabMap: {},
   loading: true,
+  setLoading: () => {}, 
+  setTabMap: () => {}, 
 });
 
 export const useUser = () => useContext(UserContext);
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [tabMap, setTabMap] = useState<Record<string, SearchTab>>({});
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -114,12 +121,10 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  useEffect(() => {
-    console.log(user);
-  }, [user]);
+  
 
   return (
-    <UserContext.Provider value={{ user, loading }}>
+    <UserContext.Provider value={{ user, loading, setLoading, tabMap, setTabMap }}>
       {children}
     </UserContext.Provider>
   );

@@ -11,3 +11,20 @@ export type NewsArticle = {
   pubDate?: string;
   pubDateTZ?: string;
 };
+
+export type SearchParams = {
+  countries: string[];
+  categories: string[];
+  keyword: string;
+  searchInTitleOnly: boolean;
+};
+
+export type SearchTab = {
+  id: string;
+  name: string;
+  params: SearchParams;
+  articles: NewsArticle[];
+  nextPage: string | null;
+  loading: boolean;
+  error: string | null;
+};

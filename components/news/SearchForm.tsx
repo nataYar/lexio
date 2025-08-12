@@ -1,7 +1,7 @@
 import React from "react";
 import Select from "react-select";
 import { Form, Button } from "react-bootstrap";
-import { countryOptions, categoryOptions } from "../../app/news/search-options";
+import { countryOptions, categoryOptions } from "../../utils/search-options";
 
 type Props = {
   selectedCountries: string[];

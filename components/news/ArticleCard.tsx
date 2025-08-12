@@ -4,6 +4,7 @@ import { Card, Badge, Button } from "react-bootstrap";
 import { format, parseISO } from "date-fns";
 import { NewsArticle } from "@/types/news";
 
+
 type Props = {
   article: NewsArticle;
   ind: number;
@@ -63,7 +64,7 @@ export default function ArticleCard({
         <Card.Title>{article.title}</Card.Title>
         {/* <div>{ind + 1}</div> */}
         {article.image_url && (
-          <Card.Img src={article.image_url} alt="news" className="mb-3 h-1/3 lg:h-40 w-auto" />
+          <Card.Img src={article.image_url} alt="news" className="mb-3 max-w-full max-h-60 w-auto object-contain" />
         )}
 
         <Card.Text>{description}</Card.Text>

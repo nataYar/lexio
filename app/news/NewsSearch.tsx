@@ -9,24 +9,8 @@ import { parseISO } from "date-fns";
 import { createClient } from "@/utils/supabase/client";
 import FloatingActions from "@/components/news/FloatingActions";
 import NewsLayout from "@/components/news/NewsLayout";
-import { NewsArticle } from "@/types/news";
+import { NewsArticle, SearchParams, SearchTab } from "@/types/news";
 
-type SearchParams = {
-  countries: string[];
-  categories: string[];
-  keyword: string;
-  searchInTitleOnly: boolean;
-};
-
-type SearchTab = {
-  id: string;
-  name: string;
-  params: SearchParams;
-  articles: NewsArticle[];
-  nextPage: string | null;
-  loading: boolean;
-  error: string | null;
-};
 
 const generateTabId = (params: SearchParams): string => {
   return btoa(
@@ -40,8 +24,7 @@ const generateTabId = (params: SearchParams): string => {
 };
 
 const NewsSearch = () => {
-  const { user } = useUser();
-  const [tabMap, setTabMap] = useState<Record<string, SearchTab>>({});
+  const { user, tabMap, setTabMap } = useUser();
   const [loading, setLoading] = useState<boolean>(false);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [selectedCountries, setSelectedCountries] = useState<string[]>(["us"]);
@@ -79,11 +62,6 @@ const NewsSearch = () => {
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  useEffect(() => {
-    console.log("tabMap");
-    console.log(tabMap);
-  }, [tabMap]);
 
   const fetchNews = async (
     params: SearchParams,
