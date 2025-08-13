@@ -39,6 +39,7 @@ const UserContext = createContext<UserContextType>({
 
 export const useUser = () => useContext(UserContext);
 
+
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [tabMap, setTabMap] = useState<Record<string, SearchTab>>({});
@@ -115,6 +116,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }
     );
+
 
     return () => {
       listener?.subscription.unsubscribe(); // ✅ clean up listener
