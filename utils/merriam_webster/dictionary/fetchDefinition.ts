@@ -1,5 +1,5 @@
 export default async function fetchDefinition(word: string) {
-  const apiKey = process.env.NEXT_PUBLIC_MW_DICTIONARY_API_KEY;
+  const apiKey = process.env.MW_DICTIONARY_API_KEY;
   const url = `https://www.dictionaryapi.com/api/v3/references/collegiate/json/${word}?key=${apiKey}`;
 // https://dictionaryapi.com/api/v3/references/collegiate/json/test?key=665adf0a-508b-48e1-ad8c-ab273b523b81
   try {

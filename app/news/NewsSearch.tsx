@@ -9,7 +9,7 @@ import { parseISO } from "date-fns";
 import { createClient } from "@/utils/supabase/client";
 import FloatingActions from "@/components/news/FloatingActions";
 import NewsLayout from "@/components/news/NewsLayout";
-import { NewsArticle, SearchParams, SearchTab } from "@/types/news";
+import { SearchParams, SearchTab } from "@/types/news";
 
 
 const generateTabId = (params: SearchParams): string => {
@@ -87,28 +87,14 @@ const NewsSearch = () => {
     //   return;
     // }
 
-    const urlParams = new URLSearchParams();
-    urlParams.append("language", "en");
-    if (params.countries.length > 0)
-      urlParams.append("country", params.countries.join(","));
-    if (params.categories.length > 0)
-      urlParams.append("category", params.categories.join(","));
-    if (params.keyword.trim()) {
-      if (params.searchInTitleOnly) {
-        urlParams.append("qInTitle", params.keyword.trim());
-      } else {
-        urlParams.append("qInMeta", params.keyword.trim());
-      }
-    }
-    if (page) urlParams.append("page", page);
-
-    const url = `https://newsdata.io/api/1/latest?apikey=${
-      process.env.NEXT_PUBLIC_NEWSDATA_API_KEY
-    }&${urlParams.toString()}`;
-
     try {
-      const response = await fetch(url);
-      const data = await response.json();
+      const response = await fetch("/api/news", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...params, page }),
+    });
+
+    const data = await response.json();
 
       setTabMap((prev) => {
         const nameParts = [];

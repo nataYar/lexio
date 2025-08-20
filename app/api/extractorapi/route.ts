@@ -10,7 +10,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing URL" }, { status: 400 });
     }
 
-    const apiKey = process.env.NEXT_PUBLIC_EXTRACTOR_API_KEY;
+    const apiKey = process.env.EXTRACTOR_API_KEY;
     if (!apiKey) {
       console.error("Missing EXTRACTOR_API_KEY environment variable");
       return NextResponse.json({ error: "Server configuration error." }, { status: 500 });
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       .trim();
 
         const openai = new OpenAI({
-          apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+          apiKey: process.env.OPENAI_API_KEY,
         });
 
  if (!rawText) {
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
  }
 
 const cleaned = await openai.responses.create({
-      model: "gpt-4.1-mini",
+      model: "gpt-4.1-nano",
       temperature: 0,
       input: `
         You are given raw extracted text from a news article.

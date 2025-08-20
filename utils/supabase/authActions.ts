@@ -43,7 +43,7 @@ export async function signup(formData: FormData) {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
     options:{
-      emailRedirectTo: process.env.NEXT_PUBLIC_SITE_URL,
+      emailRedirectTo: process.env.SITE_URL,
       data:{
         name: formData.get('name') as string
       }
@@ -65,7 +65,7 @@ export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`, 
+      redirectTo: `${process.env.SITE_URL}/auth/callback`, 
       queryParams: {
         access_type: "offline",
         prompt: "consent",
