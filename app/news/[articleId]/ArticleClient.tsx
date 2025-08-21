@@ -135,20 +135,15 @@ export default function ArticleClient({ articleId }) {
   }, [articleMeta]);
 
   const generateExercises = async () => {
-    try {
-      const exercises = await generateExercises(html);
-      // setExersices(exercises)
-      console.log(exercises)
-      console.log(JSON.stringify(exercises, null, 2));
-    } catch (err: any) {
-      console.error("Scrape error:", err);
-    }
+    // try {
+    //   const exercises = await generateExercises(html);
+    //   // setExersices(exercises)
+    //   console.log(exercises)
+    //   console.log(JSON.stringify(exercises, null, 2));
+    // } catch (err: any) {
+    //   console.error("Scrape error:", err);
+    // }
   };
-
-  useEffect(() => {
-    console.log("html");
-    console.log(html);
-  }, [html]);
 
   if (loading) return <p>Loading article content...</p>;
 

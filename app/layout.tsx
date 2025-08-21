@@ -6,7 +6,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { UserProvider } from "@/app/context/UserContext"; 
 import { WordProvider } from "@/app/context/WordContext"; 
 import GlobalListener  from "@/components/GlobalListener"
-import WordPopup from '@/components/WordPopup';
+import WordPopup from '@/components/sidePanel/WordPopup';
 import SidePanel from '@/components/sidePanel/SidePanel';
 import {  display } from '@/utils/constants'
 
