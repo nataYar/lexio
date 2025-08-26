@@ -1,25 +1,34 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useUser } from "@/app/context/UserContext";
 import { Button, Badge } from "react-bootstrap";
 import { format, parseISO } from "date-fns";
 import { createClient } from "@/utils/supabase/client";
+import { NewsArticle } from "@/types/news";
 
-export default function ArticleClient({ articleId }) {
+
+export default function ArticleClient({ articleId }: { articleId: string }) {
   const [html, setHtml] = useState("");
   const { user, tabMap, setLoading, loading } = useUser();
   const [articleMeta, setArticleMeta] = useState(null);
   const [exersices, setExersices] = useState(null);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
 
-  useEffect(() => {
-    const foundArticle = Object.values(tabMap)
-      .flatMap((tab) => tab.articles || null)
-      .find((a) => a.article_id === articleId);
-    setArticleMeta(foundArticle || null);
-  }, [articleId, tabMap]);
+  // useEffect(() => {
+  //   const foundArticle = Object.values(tabMap)
+  //     .flatMap((tab) => tab.articles || null)
+  //     .find((a) => a.article_id === articleId);
+  //   setArticleMeta(foundArticle || null);
+  // }, [articleId, tabMap]);
+
+   useEffect(() => {
+    console.log(articleId)
+    console.log(articleMeta)
+    console.log(tabMap)
+  }, [articleId, tabMap ]);
+
 
   const scrapeArticle = async () => {
     if (!articleMeta?.link) return;
@@ -49,33 +58,6 @@ export default function ArticleClient({ articleId }) {
     }
   };
 
-  useEffect(() => {
-    if (articleMeta ) {
-      console.log(articleMeta.article_id);
-
-      console.log(articleMeta.title);
-      console.log(articleMeta.link);
-
-      console.log(articleMeta.description);
-
-      // console.log(formattedHtml);
-
-      console.log(articleMeta.image_url);
-
-      console.log(articleMeta.snippet);
-
-      console.log(articleMeta.category);
-
-      console.log(articleMeta.country);
-
-      console.log(articleMeta.keywords);
-
-      console.log(articleMeta.pubDate);
-
-      console.log(articleMeta.pubDateTZ);
-    }
-  }, [articleMeta]);
-
   const saveToDB = async (formattedHtml: string) => {
     if (!articleMeta || !user) return;
 
@@ -97,7 +79,7 @@ export default function ArticleClient({ articleId }) {
             keywords: articleMeta.keywords,
             pubDate: articleMeta.pubDate,
             pubDateTZ: articleMeta.pubDateTZ,
-            user_id: user.id
+            // user_id: user.id
           },
           { onConflict: "article_id" }
         );
@@ -107,11 +89,12 @@ export default function ArticleClient({ articleId }) {
       // Save relation to viewed_articles
       const { error: viewedError } = await supabase
         .from("viewed_articles")
-        .insert({
+        .upsert({
           article_id: articleMeta.article_id,
           user_id: user.id,
           viewed_at: new Date().toISOString(),
-        });
+        },
+    { onConflict: "user_id,article_id" } );
 
       if (viewedError) throw viewedError;
 
@@ -120,19 +103,131 @@ export default function ArticleClient({ articleId }) {
       console.error("Error saving article:", err);
     }
   };
+useEffect(() => {
+    let cancelled = false;
 
-  useEffect(() => {
-    async function fetchAndSave() {
-      if (!articleMeta) return;
-      const formattedHtml = await scrapeArticle();
-      if (formattedHtml) {
-        await saveToDB(formattedHtml);
+    const saveToDB = async (formattedHtml: string, meta: Article) => {
+      if (!user) return;
+      // Save/merge article (global by article_id)
+      const { error: articleError } = await supabase
+        .from("articles")
+        .upsert(
+          {
+            article_id: meta.article_id,
+            title: meta.title,
+            link: meta.link,
+            description: meta.description,
+            full_text: formattedHtml,
+            image_url: meta.image_url,
+            snippet: meta.snippet,
+            category: meta.category,
+            country: meta.country,
+            keywords: meta.keywords,
+            pubDate: meta.pubDate,
+            pubDateTZ: meta.pubDateTZ,
+          },
+          { onConflict: "article_id" }
+        );
+      if (articleError) throw articleError;
+
+      // Track view (avoid duplicates by making a unique constraint on (user_id, article_id) and using upsert)
+      await supabase
+        .from("viewed_articles")
+        .upsert(
+          {
+            article_id: meta.article_id,
+            user_id: user.id,
+            viewed_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id,article_id" }
+        );
+    };
+
+    const load = async () => {
+      if (!articleId) return;
+      setLoading(true);
+
+      // 1) Try DB first
+      const { data: dbArticle, error } = await supabase
+        .from("articles")
+        .select("*")
+        .eq("article_id", articleId)
+        .maybeSingle();
+
+      if (error) console.error(error);
+
+      if (!cancelled && dbArticle) {
+        setArticleMeta(dbArticle);
+        if (dbArticle.full_text) {
+          setHtml(dbArticle.full_text);
+          setLoading(false);
+          return;
+        }
+        // If DB has meta but not full_text, we can extract using DB meta.link
+        if (dbArticle.link) {
+          const res = await fetch("/api/extractorapi", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: dbArticle.link }),
+          });
+          const data = await res.json();
+          const fullText = data.fullText || "";
+          if (!cancelled) setHtml(fullText);
+          await saveToDB(fullText, dbArticle);
+          setLoading(false);
+          return;
+        }
       }
-    }
-    // console.log(user.id);
 
-    fetchAndSave();
-  }, [articleMeta]);
+      // 2) Fall back to tabMap: get meta from the search results cache
+      const fromTab =
+        Object.values(tabMap)
+          .flatMap((t: any) => t.articles ?? [])
+          .find((a: any) => a.article_id === articleId) ?? null;
+
+      if (!fromTab) {
+        // Nothing to show (bad URL or cache cleared)
+        setLoading(false);
+        return;
+      }
+
+      if (!cancelled) setArticleMeta(fromTab);
+
+      // 3) Extract + save since not in DB
+      if (fromTab.link) {
+        const res = await fetch("/api/extractorapi", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: fromTab.link }),
+        });
+        const data = await res.json();
+        const fullText = data.fullText || "";
+        if (!cancelled) setHtml(fullText);
+        await saveToDB(fullText, fromTab);
+      }
+
+      setLoading(false);
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [articleId, tabMap, supabase, user, setLoading]);
+
+  
+  // useEffect(() => {
+  //   async function fetchAndSave() {
+  //     if (!articleMeta) return;
+  //     const formattedHtml = await scrapeArticle();
+  //     if (formattedHtml) {
+  //       await saveToDB(formattedHtml);
+  //     }
+  //   }
+  //   // console.log(user.id);
+
+  //   fetchAndSave();
+  // }, [articleMeta]);
 
   const generateExercises = async () => {
     // try {

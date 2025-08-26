@@ -4,11 +4,11 @@ import ViewedArticles from './ViewedArticles'
 
 const SidePanel = () => {
   return (
-    <div className='bg-gray-700 text-white fixed z-10 h-screen hidden lg:block w-[250px] p-7'>
-      <div>
+    <div className='bg-gray-700 text-white fixed z-10 h-screen hidden lg:block top-0 w-[250px] p-3'>
+      <>
         <ViewedArticles />
-      </div>
-        <div className='w-full'>
+      </>
+        <div className='w-full mt-4'>
             <WordPopup />
         </div>
     </div>

@@ -1,33 +1,9 @@
 "use client";
 
-import React, { createContext, use, useContext, useEffect, useState } from "react";
+import React, { createContext,  useMemo, useContext, useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { NewsArticle, SearchTab } from "@/types/news";
-
-
-type User = {
-  id: string;
-  name: string | null;
-  email: string | null;
-  ai_credits: number;
-  news_api_calls: number;
-  news_api_start: string | null;
-  last_news_call: string | null;
-
-  last_credit_use: string | null;
-  credit_start_date: string | null;
-  saved_articles: NewsArticle[];
-  viewed_articles: NewsArticle[];
-  searched_articles: NewsArticle[];
-};
-
-type UserContextType = {
-  user: User | null;
-  tabMap: Record<string, SearchTab>;
-  setTabMap: React.Dispatch<React.SetStateAction<Record<string, SearchTab>>>; //function that receives the current state and returns the new state
-  loading: boolean;
-  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
-};
+import { UserContextType, User, NewsArticle, SearchTab } from "@/types/news";
+import { Prev } from "react-bootstrap/esm/PageItem";
 
 const UserContext = createContext<UserContextType>({
   user: null,
@@ -39,14 +15,14 @@ const UserContext = createContext<UserContextType>({
 
 export const useUser = () => useContext(UserContext);
 
-
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [tabMap, setTabMap] = useState<Record<string, SearchTab>>({});
   const [loading, setLoading] = useState<boolean>(true);
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
-    const supabase = createClient();
+ 
 
     const fetchUser = async () => {
       setLoading(true);
@@ -73,18 +49,22 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
       const { data: savedArticles } = await supabase
         .from("saved_articles")
-        .select("article_id, articles(*)")
-        .eq("user_id", sessionUser.id);
+        .select("article_id, saved_at, articles(*)")
+        .eq("user_id", sessionUser.id)
+        .order("saved_at", { ascending: false }); // newest saved first
 
       const { data: viewedArticles } = await supabase
         .from("viewed_articles")
-        .select("article_id, articles(*)")
-        .eq("user_id", sessionUser.id);
+        .select("article_id, viewed_at, articles(*)")
+        .eq("user_id", sessionUser.id)
+        .order("viewed_at", { ascending: false }); // newest viewed first
 
       const { data: searchedArticles } = await supabase
         .from("searched_articles")
-        .select("article_id, articles(*)")
-        .eq("user_id", sessionUser.id);
+        .select("article_id, searched_at, articles(*)")
+        .eq("user_id", sessionUser.id)
+        .order("searched_at", { ascending: false }); // newest searched first
+
 
       setUser({
         id: sessionUser.id,
@@ -117,14 +97,51 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
-
     return () => {
       listener?.subscription.unsubscribe(); // ✅ clean up listener
     };
   }, []);
 
   
+  // Subscribe to new inserts in VIEWED ARTICLES for this user
+  // useEffect(() => {
+  //   if (!user) return;
 
+  //   const channel = supabase
+  //     .channel("viewed-articles-channel")
+  //     .on(
+  //       "postgres_changes",
+  //       {
+  //         event: "INSERT",
+  //         schema: "public",
+  //         table: "viewed_articles",
+  //         filter: `user_id=eq.${user.id}`, // filter only current user’s rows
+  //       },
+  //       (payload) => {
+  //         console.log("New view recorded:", payload.new);
+  //         // seUser((prev) => [payload.new, ...prev]); 
+  //         setUser((prev) => {
+  //           if (!prev) return prev; // if somehow null
+  //           return {
+  //             ...prev,
+  //             viewed_articles: [
+  //               payload.new.articles, // the new article
+  //               ...prev.viewed_articles, // existing ones
+  //             ],
+  //           };
+  //         });
+  //       }
+  //     )
+  //     .subscribe();
+
+  //   // Cleanup subscription
+  //   return () => {
+  //     supabase.removeChannel(channel);
+  //   };
+  // }, [user, supabase]);
+
+
+  console.log(user)
   return (
     <UserContext.Provider value={{ user, loading, setLoading, tabMap, setTabMap }}>
       {children}

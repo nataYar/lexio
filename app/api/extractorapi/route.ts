@@ -55,8 +55,9 @@ const cleaned = await openai.responses.create({
         1. Remove anything that is not part of the main article (ads, subscription prompts, copyright notices, repeated boilerplate text, etc.).
         2. Keep only the meaningful article content.
         3. Format the output as valid HTML, wrapping each paragraph in <p>...</p> with spacing between them.
-        4. Do not add extra commentary, metadata, or alterations — output only the cleaned article text in HTML format.
-
+        4. Do NOT include markdown fences like \`\`\`html or \`\`\`. 
+        5. Output ONLY the cleaned HTML string.
+        
         Here is the raw text:
 
         ${rawText}`

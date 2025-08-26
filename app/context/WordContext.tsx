@@ -7,7 +7,6 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import fetchDefinition from "@/utils/merriam_webster/dictionary/fetchDefinition";
 
 type DictionaryData = {
   word: string;
@@ -39,17 +38,22 @@ export const WordProvider = ({ children }: { children: ReactNode }) => {
     null
   );
 
-  useEffect(() => {
-    if (!selectedWord) return;
+ useEffect(() => {
+  if (!selectedWord) return;
 
-    console.log(`Selected word changed to: ${selectedWord}`);
+  console.log(`Selected word changed to: ${selectedWord}`);
 
-    fetchDefinition(selectedWord).then((result) => {
-      if (result) {
+  fetch(`/api/merriam_webster?word=${selectedWord}`)
+    .then((res) => res.json())
+    .then((result) => {
+      if (result && !result.error) {
         setDictionaryData(result);
+      } else {
+        console.error(result.error);
       }
     });
-  }, [selectedWord]);
+}, [selectedWord]);
+
 
   useEffect(() => {
       console.log(dictionaryData);
