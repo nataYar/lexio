@@ -6,107 +6,25 @@ import { Button, Badge } from "react-bootstrap";
 import { format, parseISO } from "date-fns";
 import { createClient } from "@/utils/supabase/client";
 import { NewsArticle } from "@/types/news";
-
+import Loading from "@/components/Loading";
 
 export default function ArticleClient({ articleId }: { articleId: string }) {
   const [html, setHtml] = useState("");
   const { user, tabMap, setLoading, loading } = useUser();
   const [articleMeta, setArticleMeta] = useState(null);
   const [exersices, setExersices] = useState(null);
-  const supabase = useMemo(() => createClient(), []);
+  const supabase = useMemo(() => createClient(), []); 
 
-
-  // useEffect(() => {
-  //   const foundArticle = Object.values(tabMap)
-  //     .flatMap((tab) => tab.articles || null)
-  //     .find((a) => a.article_id === articleId);
-  //   setArticleMeta(foundArticle || null);
-  // }, [articleId, tabMap]);
-
-   useEffect(() => {
-    console.log(articleId)
-    console.log(articleMeta)
-    console.log(tabMap)
-  }, [articleId, tabMap ]);
-
-
-  const scrapeArticle = async () => {
-    if (!articleMeta?.link) return;
-    setLoading(true);
-
-    try {
-      const res = await fetch("/api/extractorapi", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: articleMeta.link }),
-      });
-
-      const data = await res.json();
-
-      if (data.html) {
-        setHtml(data.html);
-        return data.html;
-      } else if (data.error) {
-        console.error("API error:", data.error);
-        setHtml(`Error: ${data.error}`);
-      }
-    } catch (err: any) {
-      console.error("Scrape error:", err);
-      setHtml(`Error: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const saveToDB = async (formattedHtml: string) => {
-    if (!articleMeta || !user) return;
-
-    try {
-      // Save article metadata + full_text
-      const { error: articleError } = await supabase
-        .from("articles")
-        .upsert(
-          {
-            article_id: articleMeta.article_id,
-            title: articleMeta.title,
-            link: articleMeta.link,
-            description: articleMeta.description,
-            full_text: formattedHtml,
-            image_url: articleMeta.image_url,
-            snippet: articleMeta.snippet,
-            category: articleMeta.category,
-            country: articleMeta.country,
-            keywords: articleMeta.keywords,
-            pubDate: articleMeta.pubDate,
-            pubDateTZ: articleMeta.pubDateTZ,
-            // user_id: user.id
-          },
-          { onConflict: "article_id" }
-        );
-
-      if (articleError) throw articleError;
-
-      // Save relation to viewed_articles
-      const { error: viewedError } = await supabase
-        .from("viewed_articles")
-        .upsert({
-          article_id: articleMeta.article_id,
-          user_id: user.id,
-          viewed_at: new Date().toISOString(),
-        },
-    { onConflict: "user_id,article_id" } );
-
-      if (viewedError) throw viewedError;
-
-      console.log("✅ Article + viewed_article saved");
-    } catch (err) {
-      console.error("Error saving article:", err);
-    }
-  };
-useEffect(() => {
+  useEffect(() => {
     let cancelled = false;
 
     const saveToDB = async (formattedHtml: string, meta: Article) => {
+      
+//        console.log("user from context:", user);
+// const { data: sessionUser, error } = await supabase.auth.getUser();
+// console.log("supabase session user:", sessionUser);
+
+
       if (!user) return;
       // Save/merge article (global by article_id)
       const { error: articleError } = await supabase
@@ -171,8 +89,9 @@ useEffect(() => {
             body: JSON.stringify({ url: dbArticle.link }),
           });
           const data = await res.json();
-          const fullText = data.fullText || "";
+          const fullText = data.html || "";
           if (!cancelled) setHtml(fullText);
+          
           await saveToDB(fullText, dbArticle);
           setLoading(false);
           return;
@@ -201,7 +120,8 @@ useEffect(() => {
           body: JSON.stringify({ url: fromTab.link }),
         });
         const data = await res.json();
-        const fullText = data.fullText || "";
+        console.log(data)
+        const fullText = data.html || "";
         if (!cancelled) setHtml(fullText);
         await saveToDB(fullText, fromTab);
       }
@@ -215,40 +135,44 @@ useEffect(() => {
     };
   }, [articleId, tabMap, supabase, user, setLoading]);
 
-  
-  // useEffect(() => {
-  //   async function fetchAndSave() {
-  //     if (!articleMeta) return;
-  //     const formattedHtml = await scrapeArticle();
-  //     if (formattedHtml) {
-  //       await saveToDB(formattedHtml);
-  //     }
-  //   }
-  //   // console.log(user.id);
-
-  //   fetchAndSave();
-  // }, [articleMeta]);
 
   const generateExercises = async () => {
-    // try {
-    //   const exercises = await generateExercises(html);
-    //   // setExersices(exercises)
-    //   console.log(exercises)
-    //   console.log(JSON.stringify(exercises, null, 2));
-    // } catch (err: any) {
-    //   console.error("Scrape error:", err);
-    // }
-  };
+  if (!html) {
+    console.warn("No article text available to generate exercises.");
+    return;
+  }
+
+  try {
+    // setLoading(true);
+
+    const res = await fetch("/api/openai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ articleText: html }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed with status ${res.status}`);
+    }
+
+    const data = await res.json();
+    console.log(data)
+    setExersices(data); // store exercises JSON in state
+  } catch (err) {
+    console.error("Error generating exercises:", err);
+  } finally {
+    console.log("done")
+    // setLoading(false);
+  }
+};
+
 
   if (loading) return <p>Loading article content...</p>;
 
   return (
-    <div className="mx-auto py-8 px-4">
+    <div className="mx-auto py-8 ">
+      
       <h1 className="text-3xl font-bold mb-4">{articleMeta?.title}</h1>
-
-      {/* <button onClick={scrapeArticle} disabled={loading}>
-        {loading ? "Scraping..." : ""}
-      </button> */}
 
       {articleMeta?.image_url && (
         <img
@@ -283,13 +207,15 @@ useEffect(() => {
         </p>
       )}
 
-      <div className="overflow-y-auto p-6">
+      <div className="overflow-y-auto py-8">
         <article className="prose prose-lg max-w-none">
           {html ? (
-            <div dangerouslySetInnerHTML={{ __html: html }} />
-          ) : (
-            "No article loaded yet."
-          )}
+              <div dangerouslySetInnerHTML={{ __html: html }} />
+            ) : loading ? (
+              <Loading />
+            ) : (
+              <p>No article found.</p>
+            )}
         </article>
       </div>
 
@@ -305,6 +231,9 @@ useEffect(() => {
           </Button>
         </div>
       ) : null}
+      <div className="exercises">
+
+      </div>
     </div>
   );
 }

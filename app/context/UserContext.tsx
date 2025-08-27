@@ -19,11 +19,10 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [tabMap, setTabMap] = useState<Record<string, SearchTab>>({});
   const [loading, setLoading] = useState<boolean>(true);
-  const supabase = useMemo(() => createClient(), []);
+  const supabase = useMemo(() => createClient(), []); 
+
 
   useEffect(() => {
- 
-
     const fetchUser = async () => {
       setLoading(true);
 

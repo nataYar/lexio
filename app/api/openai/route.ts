@@ -1,9 +1,7 @@
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // use server-side key
-});
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function POST(req: Request) {
   try {
@@ -23,17 +21,31 @@ export async function POST(req: Request) {
         Article:
         """${articleText}"""
       `,
-      response_format: { type: "json" },
     });
 
-    // Use output_text instead of diving into nested arrays
-    const exercises = JSON.parse(response.output_text);
+     const output = response.output_text || "";
 
-    return NextResponse.json(exercises);
+      // Use regex to extract the first JSON object in the text
+      const match = output.match(/\{[\s\S]*\}/);
+      if (!match) {
+        console.error("No JSON found in model output:", output);
+        return NextResponse.json({ error: "No valid JSON in model output" }, { status: 500 });
+      }
+
+      let exercises = {};
+      try {
+        exercises = JSON.parse(match[0]);
+      } catch (e) {
+        console.error("Failed to parse JSON:", e, match[0]);
+        return NextResponse.json({ error: "Invalid JSON from OpenAI" }, { status: 500 });
+      }
+
+      return NextResponse.json(exercises);
+
   } catch (err: any) {
     console.error("Error creating exercises:", err);
     return NextResponse.json(
-      { error: "Failed to generate exercises" },
+      { error: err.message || "Failed to generate exercises" },
       { status: 500 }
     );
   }

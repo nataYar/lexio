@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     }
 
     const data = await response.json();
-
+    console.log(data)
     // The raw article text should be in data.raw_text
     let rawText = data.raw_text || "";
 

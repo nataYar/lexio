@@ -9,7 +9,7 @@ import { usePathname } from "next/navigation";
 const ViewedArticles = () => {
   const { user, tabMap } = useUser();
   const [open, setOpen] = useState(false);
-  const[articles, setArticles] = useState();
+  const[articles, setArticles] = useState<any[]>([]);
 const pathname = usePathname();
   
   useEffect(() => {
@@ -19,11 +19,11 @@ const pathname = usePathname();
     }, [user]);
 
   return (
-    <div className="relative">
+    <div className="relative ">
       <Button
         type="button" 
         variant="light"
-        className="d-flex align-items-center !bg-transparent !border-transparent text-white"
+        className="d-flex align-items-center !bg-transparent !border-transparent text-white p-3"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
       >
@@ -32,12 +32,18 @@ const pathname = usePathname();
           <ChevronDown  className="ms-2" />
         ) : (
           <ChevronRight className="ms-2" />
-        )}
+        )}  
       </Button>
-         {open && (
-         <div className="mt-2 ">
+         
+         {/* Sliding panel */}
+       <div
+        className={`p-2 bg-gray-700 ${articles.length === 0 ? "h-auto": "h-[500px]"}overflow-y-scroll mt-1 w-full rounded-lg border-none absolute top-full left-0 text-white shadow-lg
+          transform transition-all duration-300
+          ${open ? "translate-x-0 opacity-100 pointer-events-auto" : "-translate-x-full opacity-0 pointer-events-none"}`}
+      >
+
             <ListGroup className="!border-transparent !bg-transparent">
-                {articles && articles.length === 0 ? (
+                { articles.length === 0 ? (
                 <ListGroup.Item>No viewed articles yet</ListGroup.Item>
                 ) : (
                 articles.map((article, ind) => {
@@ -46,11 +52,11 @@ const pathname = usePathname();
                     <Link
                         key={ind}
                         href={`/news/${article.article_id}`}
-                        className="text-inherit !no-underline"
+                        className="border-none text-inherit !no-underline "
                         >
                         <ListGroup.Item 
-                        className={` ${
-                        isActive ? "!bg-primary !text-blue-700 font-bold" : ""
+                        className={`!border-none !bg-transparent text-white  ${
+                        isActive ? "!bg-primary !text-blue-400 font-bold" : ""
                       }`}
                         >
                             {article.title ?? `Article #${article.id}`}
@@ -61,7 +67,7 @@ const pathname = usePathname();
                 )}
             </ListGroup>
         </div>
-        )}
+      
     </div>
   );
 };
