@@ -8,6 +8,7 @@ import { WordProvider } from "@/app/context/WordContext";
 import GlobalListener  from "@/components/GlobalListener"
 import WordPopup from '@/components/sidePanel/WordPopup';
 import SidePanel from '@/components/sidePanel/SidePanel';
+import FloatingActions from "@/components/FloatingActions";
 import {  display } from '@/utils/constants'
 
 const geistSans = Geist({
@@ -39,6 +40,7 @@ export default function RootLayout({
               <div className="fixed bottom-0 bg-white lg:hidden w-full z-100">
                 <WordPopup />
               </div>
+              <FloatingActions />
               <div className="pl-0 lg:pl-[250px]">{children}</div>
             </WordProvider>
         </UserProvider>

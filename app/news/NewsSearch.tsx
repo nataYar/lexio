@@ -7,7 +7,7 @@ import { Button, Stack, Alert, Image } from "react-bootstrap";
 import { useUser } from "@/app/context/UserContext";
 import { parseISO } from "date-fns";
 import { createClient } from "@/utils/supabase/client";
-import FloatingActions from "@/components/news/FloatingActions";
+
 import NewsLayout from "@/components/news/NewsLayout";
 import { SearchParams, SearchTab } from "@/types/news";
 
@@ -297,9 +297,7 @@ const NewsSearch = () => {
             <Alert variant="danger">{tabMap[activeTabId].error}</Alert>
           )}
 
-          <FloatingActions
-          // toggleCardWidth={() => setIsWide(prev => !prev)}
-          />
+          
 
           <div className="flex flex-row items-baseline gap-6">
             {tabMap[activeTabId].articles.length === 0 ? (

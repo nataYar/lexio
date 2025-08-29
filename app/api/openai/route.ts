@@ -10,13 +10,31 @@ export async function POST(req: Request) {
     const response = await client.responses.create({
       model: "gpt-4.1-mini",
       input: `
-        Read the following article and create an object named "exercises".
-        The object should contain:
-        - 10 multiple-choice questions (mix of comprehension and advanced vocabulary).
-        - If the article contains phrasal verbs, add extra questions about them.
-        - Each question must have 4 options.
-        - Clearly mark which one is correct with "isCorrect": true, and the others false.
-        - Return valid JSON only.
+      Read the following article and generate exercises.
+
+    Output format (MUST be valid JSON, nothing else):
+    {
+      "exercises": [
+        {
+          "question": "string",
+          "options": [
+            { "option": "string", "isCorrect": true|false },
+            { "option": "string", "isCorrect": true|false },
+            { "option": "string", "isCorrect": true|false },
+            { "option": "string", "isCorrect": true|false }
+          ]
+        }
+      ]
+    }
+
+         Rules:
+    - Always return exactly this JSON object with an "exercises" array.
+    - Include exactly 10 questions.
+    - If the article contains phrasal verbs, add extra questions about them (beyond the 10).
+    - Each question must have exactly 4 options.
+    - Only one option should have "isCorrect": true.
+    - Do not include any explanations, comments, or text outside the JSON.
+
 
         Article:
         """${articleText}"""

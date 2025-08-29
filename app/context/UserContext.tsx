@@ -103,44 +103,42 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
   
   // Subscribe to new inserts in VIEWED ARTICLES for this user
-  // useEffect(() => {
-  //   if (!user) return;
+  useEffect(() => {
+    if (!user) return;
 
-  //   const channel = supabase
-  //     .channel("viewed-articles-channel")
-  //     .on(
-  //       "postgres_changes",
-  //       {
-  //         event: "INSERT",
-  //         schema: "public",
-  //         table: "viewed_articles",
-  //         filter: `user_id=eq.${user.id}`, // filter only current user’s rows
-  //       },
-  //       (payload) => {
-  //         console.log("New view recorded:", payload.new);
-  //         // seUser((prev) => [payload.new, ...prev]); 
-  //         setUser((prev) => {
-  //           if (!prev) return prev; // if somehow null
-  //           return {
-  //             ...prev,
-  //             viewed_articles: [
-  //               payload.new.articles, // the new article
-  //               ...prev.viewed_articles, // existing ones
-  //             ],
-  //           };
-  //         });
-  //       }
-  //     )
-  //     .subscribe();
+    const channel = supabase
+      .channel("viewed-articles-channel")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "viewed_articles",
+          filter: `user_id=eq.${user.id}`, // filter only current user’s rows
+        },
+        (payload) => {
+          console.log("New view recorded:", payload.new);
+          // seUser((prev) => [payload.new, ...prev]); 
+          setUser((prev) => {
+            if (!prev) return prev; // if somehow null
+            return {
+              ...prev,
+              viewed_articles: [
+                payload.new.articles, // the new article
+                ...prev.viewed_articles, // existing ones
+              ],
+            };
+          });
+        }
+      )
+      .subscribe();
 
-  //   // Cleanup subscription
-  //   return () => {
-  //     supabase.removeChannel(channel);
-  //   };
-  // }, [user, supabase]);
+    // Cleanup subscription
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, supabase]);
 
-
-  console.log(user)
   return (
     <UserContext.Provider value={{ user, loading, setLoading, tabMap, setTabMap }}>
       {children}

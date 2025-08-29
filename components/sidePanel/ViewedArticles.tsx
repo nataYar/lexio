@@ -1,15 +1,17 @@
 "use client";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useUser } from "@/app/context/UserContext";
 import { Button, ListGroup } from "react-bootstrap";
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import "@/app/globals.css"
 
 const ViewedArticles = () => {
   const { user, tabMap } = useUser();
   const [open, setOpen] = useState(false);
   const[articles, setArticles] = useState<any[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
 const pathname = usePathname();
   
   useEffect(() => {
@@ -18,12 +20,25 @@ const pathname = usePathname();
       } 
     }, [user]);
 
+      useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [containerRef]);
+
   return (
-    <div className="relative ">
+    <div className="relative" >
       <Button
         type="button" 
         variant="light"
-        className="d-flex align-items-center !bg-transparent !border-transparent text-white p-3"
+        className="d-flex align-items-center !bg-transparent !border-transparent text-white p-4"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
       >
@@ -36,8 +51,8 @@ const pathname = usePathname();
       </Button>
          
          {/* Sliding panel */}
-       <div
-        className={`p-2 bg-gray-700 ${articles.length === 0 ? "h-auto": "h-[500px]"}overflow-y-scroll mt-1 w-full rounded-lg border-none absolute top-full left-0 text-white shadow-lg
+       <div ref={containerRef}
+        className={`p-2 bg-gray-100 ${articles.length === 0 ? "h-auto": "h-[500px] overflow-y-scroll custom-scrollbar"} mt-1 w-full rounded-lg border-none absolute top-full left-0 !text-gray-700 shadow-lg
           transform transition-all duration-300
           ${open ? "translate-x-0 opacity-100 pointer-events-auto" : "-translate-x-full opacity-0 pointer-events-none"}`}
       >
@@ -55,8 +70,8 @@ const pathname = usePathname();
                         className="border-none text-inherit !no-underline "
                         >
                         <ListGroup.Item 
-                        className={`!border-none !bg-transparent text-white  ${
-                        isActive ? "!bg-primary !text-blue-400 font-bold" : ""
+                        className={`!border-none !bg-transparent ${
+                        isActive ? "!bg-primary !text-blue-400 font-bold " : ""
                       }`}
                         >
                             {article.title ?? `Article #${article.id}`}

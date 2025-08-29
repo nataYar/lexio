@@ -12,7 +12,7 @@ const WordPopup = ( )  => {
 
   return (
     selectedWord && (
-      <div className={` w-full p-4 border border-gray-300 rounded-lg`}>
+      <div className={` w-full p-4 rounded-lg`}>
         <h4 className="text-lg font-bold mb-2">
           {dictionaryData.word.toLocaleLowerCase()}
         </h4>
