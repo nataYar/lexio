@@ -10,7 +10,7 @@ type Props = {
 };
 
 export default async function ArticlePage({ params }: Props) {
-  const  articleId  = (await params).articleId;
+  const  articleId  = params.articleId;
 
   return (
     <div className="max-w-3xl mx-auto mt-5 py-8 px-4">
