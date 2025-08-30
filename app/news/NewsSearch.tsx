@@ -229,7 +229,7 @@ const NewsSearch = () => {
     <div className="flex flex-col items-center w-full">
       <div>
         <div className="flex">
-          <h4 className="mt-3">Search news</h4>
+          <h4 className="pt-15 lg:mt-3">Search news</h4>
 
           <Image
             className="h-6 my-auto"
