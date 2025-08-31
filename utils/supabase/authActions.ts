@@ -65,7 +65,7 @@ export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${process.env.SITE_URL}/auth/callback`, 
+      redirectTo: "https://lexio-delta.vercel.app/auth/callback", 
       queryParams: {
         access_type: "offline",
         prompt: "consent",
