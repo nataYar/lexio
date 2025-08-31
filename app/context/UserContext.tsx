@@ -68,7 +68,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       setUser({
         id: sessionUser.id,
         name: sessionUser.user_metadata?.name ?? null,
-        email: sessionUser.email,
+        email: sessionUser.email ?? null,
         ai_credits: profile.ai_credits ?? 0,
         news_api_calls: profile.news_api_calls ?? 0,
         news_api_start: profile.news_api_start ?? null,
