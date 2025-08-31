@@ -75,9 +75,12 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         last_news_call: profile.last_news_call ?? null,
         last_credit_use: profile.last_credit_use ?? null,
         credit_start_date: profile.credit_start_date ?? null,
-        saved_articles: savedArticles?.map((sa) => sa.articles) ?? [],
-        viewed_articles: viewedArticles?.map((va) => va.articles) ?? [],
-        searched_articles: searchedArticles?.map((va) => va.articles) ?? [],
+      saved_articles: savedArticles?.flatMap((sa) => sa.articles as NewsArticle[]) ?? [],
+      viewed_articles: viewedArticles?.flatMap((va) => va.articles as NewsArticle[]) ?? [],
+      searched_articles: searchedArticles?.flatMap((sa) => sa.articles as NewsArticle[]) ?? [],
+
+
+
       });
 
       setLoading(false);
