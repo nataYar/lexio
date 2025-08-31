@@ -24,6 +24,12 @@ export default function ArticleClient({ articleId }: { articleId: string }) {
   useEffect(() => {
     let cancelled = false;
 
+    const cached = localStorage.getItem(`article:${articleId}`);
+      if (cached) {
+        setHtml(cached);
+        return;
+      }
+
     const saveToDB = async (formattedHtml: string, meta: Article) => {
       //        console.log("user from context:", user);
       // const { data: sessionUser, error } = await supabase.auth.getUser();
@@ -129,6 +135,10 @@ export default function ArticleClient({ articleId }: { articleId: string }) {
       }
 
       setLoading(false);
+      if (!cancelled && fullText) {
+      localStorage.setItem(`article:${articleId}`, fullText);
+      setHtml(fullText);
+    }
     };
 
     load();
