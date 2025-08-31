@@ -3,15 +3,17 @@ import { notFound } from "next/navigation";
 import ArticleClient from "./ArticleClient"; // client component
 import Link from "next/link";
 
-type Props = {
+type ArticlePageProps = {
   params: {
     articleId: string;
   };
 };
 
-export default async function ArticlePage({ params }: Props) {
+export default async function ArticlePage({ params }: ArticlePageProps) {
   const  articleId  = params.articleId;
-
+if (!articleId) {
+    notFound();
+  }
   return (
     <div className="max-w-3xl mx-auto mt-5 py-8 px-4">
       <Link 
