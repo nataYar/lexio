@@ -3,13 +3,9 @@ import { notFound } from "next/navigation";
 import ArticleClient from "./ArticleClient"; // client component
 import Link from "next/link";
 
-type ArticlePageProps = {
-  params: {
-    articleId: string;
-  };
-};
 
-export default async function ArticlePage({ params }: ArticlePageProps) {
+
+export default async function ArticlePage({ params }) {
   const  articleId  = params.articleId;
 if (!articleId) {
     notFound();
