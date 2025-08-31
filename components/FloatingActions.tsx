@@ -1,24 +1,13 @@
 "use client"
 import { useState } from "react";
 import { Button } from "react-bootstrap";
-import { ArrowUp, Maximize2 , X, Plus } from "lucide-react";
 import { ChevronUp } from 'lucide-react';
 
-type FloatingActionsProps = {
-  toggleCardWidth: () => void;
-};
-
-const FloatingActions = ({ toggleCardLayout }: FloatingActionsProps) => {
+const FloatingActions = () => {
   const [expanded, setExpanded] = useState<boolean>(false);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-    setExpanded(false);
-  };
-
-  const handleToggleWidth = () => {
-    toggleCardLayout();
-    setExpanded(false);
   };
 
   return (
@@ -35,15 +24,6 @@ const FloatingActions = ({ toggleCardLayout }: FloatingActionsProps) => {
           </Button>
           
         </>
-      {/* )} */}
-
-      {/* <Button
-        variant="dark"
-        onClick={() => setExpanded((prev) => !prev)}
-        className="rounded-circle p-3 shadow"
-      >
-        {expanded ? <X size={20} /> : <Plus size={20} />}
-      </Button> */}
      </div> 
   );
 }
