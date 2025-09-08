@@ -52,9 +52,9 @@ const pathname = usePathname();
          
          {/* Sliding panel */}
        <div ref={containerRef}
-        className={`p-2 bg-gray-100 ${articles.length === 0 ? "h-auto": "h-[500px] overflow-y-scroll custom-scrollbar"} mt-1 w-full rounded-lg border-none absolute top-full left-0 !text-gray-700 shadow-lg
+        className={`p-2  bg-gray-800 ${articles.length === 0 ? "h-auto": "h-[500px] overflow-y-scroll custom-scrollbar"} mt-1 w-full rounded-lg border-none absolute top-full left-0 !text-gray-700 shadow-lg
           transform transition-all duration-300
-          ${open ? "translate-x-0 opacity-100 pointer-events-auto" : "-translate-x-full opacity-0 pointer-events-none"}`}
+          ${open ? "translate-x-0 opacity-100 pointer-events-auto !z-100" : "-translate-x-full opacity-0 pointer-events-none"}`}
       >
 
             <ListGroup className="!border-transparent !bg-transparent">
