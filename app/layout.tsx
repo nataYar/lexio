@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import NavComponent from '../components/Nav';
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
 import 'bootstrap/dist/css/bootstrap.min.css';
+import './globals.css';
 import { UserProvider } from "@/app/context/UserContext"; 
 import { WordProvider } from "@/app/context/WordContext"; 
 import GlobalListener  from "@/components/GlobalListener"
@@ -10,6 +10,7 @@ import WordPopup from '@/components/sidePanel/WordPopup';
 import SidePanel from '@/components/sidePanel/SidePanel';
 import FloatingActions from "@/components/FloatingActions";
 import {  display } from '@/utils/constants'
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
